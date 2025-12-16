@@ -16,3 +16,8 @@ dependencies = [
     "transformers==4.40.2",
     "trl==0.11.4",
 ]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.29.5",
+]
