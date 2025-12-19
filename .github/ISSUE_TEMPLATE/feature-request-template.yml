@@ -1,0 +1,29 @@
+name: "Feature Request"
+title: "[FEAT] "
+description: "새로운 기능 제안을 위한 템플릿입니다."
+labels: ["feature"]
+body:
+  - type: textarea
+    attributes:
+      label: 📄 Description
+      description: 제안하시는 기능에 대해 구체적으로 설명해 주세요.
+      placeholder: |
+        어떤 기능인가요?
+        이 기능이 구현되면 어떤 점이 좋아지나요?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: ✅ To Do
+      description: 할 일을 체크박스 형태로 작성해주세요.
+      placeholder: |
+        - [ ] 세부 작업 1
+        - [ ] 세부 작업 2
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: 🔗 Related Issues
+      description: 관련된 이슈나 PR이 있다면 링크(#번호)를 남겨주세요.
+    validations:
+      required: false
