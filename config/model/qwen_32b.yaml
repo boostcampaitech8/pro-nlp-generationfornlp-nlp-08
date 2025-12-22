@@ -1,0 +1,15 @@
+# @package _global_
+
+model:
+  name: "unsloth/Qwen3-32B-bnb-4bit"
+  alias: "main_solver"
+  
+  quantization:
+    load_in_4bit: true
+    bnb_4bit_compute_dtype: "bfloat16" # A100 필수
+    bnb_4bit_use_double_quant: true
+    bnb_4bit_quant_type: "nf4"
+
+  generation:
+    max_tokens: 4096
+    temperature: 0.7
