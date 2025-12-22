@@ -1,0 +1,11 @@
+defaults:
+  - _self_
+  - model: qwen_32b 
+  - prompt/router@prompt.router
+  - prompt/solver@prompt.solver
+  - prompt/critic@prompt.critic
+
+system:
+  device: "cuda"
+  seed: 42
+  project_name: "CSAT-Solver-Agent"
