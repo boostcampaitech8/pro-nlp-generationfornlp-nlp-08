@@ -1,0 +1,3 @@
+# @package path
+input: "data/processed/val_stratified_v1.csv"
+output: "outputs/submission.csv"

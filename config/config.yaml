@@ -1,6 +1,7 @@
 defaults:
   - _self_
   - model: qwen_32b 
+  - path: default
   - prompt/router@prompt.router
   - prompt/solver@prompt.solver
   - prompt/critic@prompt.critic
