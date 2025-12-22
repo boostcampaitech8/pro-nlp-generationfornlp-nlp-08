@@ -33,7 +33,6 @@ def router_node(state: Dict, cfg) -> Dict:
     # LLM 출력(JSON) 파싱
     try:
         parsed_output = json.loads(raw_output)
-        
         category = parsed_output["category"]
         is_rag_required = parsed_output["is_rag_required"]
     
@@ -42,9 +41,12 @@ def router_node(state: Dict, cfg) -> Dict:
         raise ValueError("LLM 응답을 JSON으로 파싱하는 데 실패했습니다.")
     
     # 상태 업데이트
-    state["track_info"] = {
+    track_info = {
         "category": category,
         "is_rag_required": is_rag_required
     }
+
     print(f"🚦 [Router] 문제 유형: {category}, RAG 필요 여부: {is_rag_required}")
-    return state
+    return {
+        "track_info": track_info
+    }
