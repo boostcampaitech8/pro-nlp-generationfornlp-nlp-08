@@ -8,3 +8,5 @@ outputs/**/*
 __pycache__/
 *.pyc
 src/base/baseline_code.ipynb
+.env
+.langgraph_api
