@@ -1,0 +1,14 @@
+# @package _global_
+
+name: "unsloth/Qwen2.5-32B-Instruct-bnb-4bit"
+alias: "sub_solver"
+
+quantization:
+  load_in_4bit: true
+  bnb_4bit_compute_dtype: "bfloat16"
+  bnb_4bit_use_double_quant: true
+  bnb_4bit_quant_type: "nf4"
+
+generation:
+  max_tokens: 4096
+  temperature: 0.7
