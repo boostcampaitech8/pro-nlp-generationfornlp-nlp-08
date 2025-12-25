@@ -1,7 +1,6 @@
 from typing import Dict
 import json, re
 from langchain_core.messages import SystemMessage, HumanMessage
-from model_load import load_router_llm
 
 import json
 import re
@@ -47,7 +46,7 @@ def router_node(state: Dict, cfg) -> Dict:
     ]
     
     # LLM 호출
-    llm = load_router_llm()
+    llm = cfg.router_llm
     response = llm.invoke(messages)
     print(response)
     raw_output = (
