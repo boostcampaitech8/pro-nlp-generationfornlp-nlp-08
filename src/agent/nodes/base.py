@@ -59,7 +59,6 @@ class BaseLLMNode:
         try:
             formatted_content = prompt_template.format(**kwargs)
         except KeyError as e:
-            # 팀원들이 실수로 변수를 안 넣었을 때 에러 메시지를 명확히 줍니다.
             error_msg = f"❌ [Prompt Error] 템플릿 변수 '{e}'가 누락되었습니다."
             print(error_msg)
             return error_msg
