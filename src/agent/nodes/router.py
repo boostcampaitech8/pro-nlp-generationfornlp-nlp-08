@@ -18,7 +18,7 @@ def extract_json_from_text(text: str) -> Dict:
     return json.loads(json_str)
 
 
-def router_node(state: Dict, cfg) -> Dict:
+def router_node(state: Dict, cfg, llm) -> Dict:
     '''
     Router 노드: 문제 유형(category)을 분석하여 RAG 필요 여부(is_rag_required) 결정
     cfg.prompt.router.system을 사용하여 LLM에 문제 유형 분류 요청
@@ -46,7 +46,6 @@ def router_node(state: Dict, cfg) -> Dict:
     ]
     
     # LLM 호출
-    llm = cfg.router_llm
     response = llm.invoke(messages)
     print(response)
     raw_output = (

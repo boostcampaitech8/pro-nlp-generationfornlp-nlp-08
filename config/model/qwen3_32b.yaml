@@ -1,14 +1,20 @@
-path: "unsloth/Qwen3-32B-bnb-4bit"
-name: "Qwen3-32B-4bit" # 로깅이나 출력용 이름
+# @package model.solver
 
-# 양자화 설정
-quantization:
-  load_in_4bit: true
-  bnb_4bit_compute_dtype: "bfloat16"
-  bnb_4bit_use_double_quant: true
-  bnb_4bit_quant_type: "nf4"
+name: "solver-llm"
 
-# 생성 설정
+loader:
+  path: "unsloth/Qwen3-32B-bnb-4bit"
+  model_kwargs:
+    device_map: auto
+    trust_remote_code: true
+  quantization:
+    load_in_4bit: true
+    bnb_4bit_compute_dtype: "bfloat16"
+    bnb_4bit_use_double_quant: true
+    bnb_4bit_quant_type: "nf4"
+  tokenizer_kwargs:
+    trust_remote_code: true
+
 generation:
   max_new_tokens: 4096
   temperature: 0.2
