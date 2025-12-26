@@ -1,0 +1,7 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "csat_agent": "./src/agent/studio_entry.py:app"
+  },
+  "env": ".env"
+}

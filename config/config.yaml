@@ -1,9 +1,12 @@
 defaults:
   - _self_
-  - model: qwen_32b 
+  - path: default
   - prompt/router@prompt.router
   - prompt/solver@prompt.solver
   - prompt/critic@prompt.critic
+  - prompt/retrieval@prompt.retrieval
+  - model/qwen2.5_32b@model.sub_solver
+  - model/qwen3_32b@model.main_solver
 
 system:
   device: "cuda"

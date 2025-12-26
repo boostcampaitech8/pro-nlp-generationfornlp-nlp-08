@@ -1,6 +1,9 @@
 import hydra
 from omegaconf import DictConfig, OmegaConf
 from src.agent.graph import build_graph
+from dotenv import load_dotenv
+
+load_dotenv()  # .env 파일에서 환경 변수 로드
 
 @hydra.main(version_base=None, config_path="config", config_name="config")
 def main(cfg: DictConfig):
