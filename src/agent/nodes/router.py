@@ -5,6 +5,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 import json
 import re
 from typing import Dict
+from src.agent.nodes.base import BaseLLMNode
 
 def extract_json_from_text(text: str) -> Dict:
     """
@@ -18,7 +19,7 @@ def extract_json_from_text(text: str) -> Dict:
     return json.loads(json_str)
 
 
-def router_node(state: Dict, cfg, llm) -> Dict:
+"""def router_node(state: Dict, cfg, llm) -> Dict:
     '''
     Router 노드: 문제 유형(category)을 분석하여 RAG 필요 여부(is_rag_required) 결정
     cfg.prompt.router.system을 사용하여 LLM에 문제 유형 분류 요청
@@ -60,3 +61,41 @@ def router_node(state: Dict, cfg, llm) -> Dict:
         "is_rag_required": parsed_output["is_rag_required"]
     }
     return {"track_info": track_info}
+"""
+
+class RouterNode(BaseLLMNode):
+    """
+    문제 유형(category)과 RAG 필요 여부(is_rag_required)를 판별하는 Router 노드
+    """
+
+    def __init__(self, cfg):
+        # router 전용 모델을 사용하도록 명시
+        super().__init__(cfg, model_name="router")
+
+        self.prompt_template = cfg.prompt.router.system
+
+    def __call__(self, state: Dict) -> Dict:
+        print("🚦 [Router] 문제 유형 분석 중...")
+
+        paragraph = state["paragraph"]
+        question = state["problem"]["question"]
+
+        # BaseLLMNode.generate() 사용
+        raw_output = self.generate(
+            self.prompt_template,
+            paragraph=paragraph,
+            question=question,
+        ).strip()
+
+        print("🧾 [Router Raw Output]")
+        print(raw_output)
+
+        # JSON 파싱
+        parsed = extract_json_from_text(raw_output)
+
+        track_info = {
+            "category": parsed["category"],
+            "is_rag_required": parsed["is_rag_required"],
+        }
+
+        return {"track_info": track_info}
