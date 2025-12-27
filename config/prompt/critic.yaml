@@ -1,6 +1,6 @@
 # @package prompt.critic
 
-system: |
+template: |
   당신은 논리적인 추론 과정을 검증하는 비평가입니다.
   제공된 지문, 질문, 선지를 바탕으로 모델이 도출한 정답을 '정답 선정 이유'가 논리적으로 타당한지 판정하세요.
   
@@ -22,4 +22,4 @@ system: |
   - 반드시 아래 JSON 객체 하나만 출력하고, 다른 설명이나 코드 블록(```)을 포함하지 마라.
   
   ### 출력 형식
-  {"critic_result": "Pass" 또는 "Fail", "critic_reason": "판정 근거를 간략히 설명"}
+  {{"critic_result": "Pass" 또는 "Fail", "critic_reason": "판정 근거를 간략히 설명"}}
