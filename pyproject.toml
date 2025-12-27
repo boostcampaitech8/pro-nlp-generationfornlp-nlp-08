@@ -25,6 +25,7 @@ dependencies = [
     "torch>=2.9.1",
     "tqdm>=4.67.1",
     "unsloth[colab-new]",
+    "wikipedia>=1.4.0",
 ]
 
 [dependency-groups]
