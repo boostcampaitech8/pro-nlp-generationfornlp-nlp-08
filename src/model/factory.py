@@ -1,41 +1,26 @@
-# src/model/factory.py
+from omegaconf import DictConfig
 from src.model.loader import HuggingFaceLoader
 
-
 class ModelFactory:
-    def __init__(self, cfg):
+    def __init__(self, config: DictConfig):
         """
-        cfg = cfg.model
+        config: cfg.model 전체를 받습니다.
+        (예: {'main_solver': {...}, 'sub_solver': {...}})
         """
-        self.cfg = cfg
+        self.config = config
 
     def get_model(self, model_key: str):
-        if model_key not in self.cfg:
-            raise ValueError(
-                f"Unknown model key: {model_key}. "
-                f"Available keys: {list(self.cfg.keys())}"
-            )
+        """
+        model_key: config.yaml에서 지정한 이름 (예: "main_solver", "sub_solver")
+        """
+        if model_key not in self.config:
+            available_keys = list(self.config.keys())
+            raise ValueError(f"❌ [Factory] '{model_key}' 설정을 찾을 수 없습니다. (가능한 목록: {available_keys})")
 
-        raw_cfg = self.cfg[model_key]
-        loader_cfg = self._normalize_cfg(raw_cfg)
-
-        loader = HuggingFaceLoader(loader_cfg)
+        # 해당 키의 설정만 추출
+        target_config = self.config[model_key]
+        
+        # 로더 생성 및 로딩 수행
+        # 추후 unsloth 등을 쓴다면 여기서 target_config 내용을 보고 분기 처리 가능
+        loader = HuggingFaceLoader(target_config)
         return loader.load()
-
-    def _normalize_cfg(self, cfg):
-        """
-        cfg = cfg.model.<router | main_solver | sub_solver>
-        공통 스키마로 정규화
-        """
-        loader_cfg = {
-            "name": cfg.name,
-            "path": cfg.loader.path,
-            "model_kwargs": dict(cfg.loader.model_kwargs),
-            "tokenizer_kwargs": dict(cfg.loader.tokenizer_kwargs),
-        }
-
-        # quantization은 있는 경우에만
-        if "quantization" in cfg.loader and cfg.loader.quantization:
-            loader_cfg["quantization"] = dict(cfg.loader.quantization)
-
-        return loader_cfg
