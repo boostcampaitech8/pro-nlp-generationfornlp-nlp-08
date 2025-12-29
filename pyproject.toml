@@ -3,7 +3,7 @@ name = "suneung-solver"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "accelerate>=1.12.0",
     "bitsandbytes>=0.49.0",
@@ -29,8 +29,21 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "black>=25.12.0",
     "ipykernel>=6.29.5",
 ]
 
 [tool.uv.sources]
 unsloth = { git = "https://github.com/unslothai/unsloth.git" }
+
+
+[tool.black]
+line-length = 88           # 한 줄 최대 길이
+target-version = ['py311'] # 프로젝트의 파이썬 버전
+include = '\.pyi?$'       # 포맷팅할 파일 확장자
+exclude = '''              # 제외할 폴더들
+/(
+    \.git
+  | \.venv\
+)/
+'''
