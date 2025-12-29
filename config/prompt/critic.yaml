@@ -22,4 +22,4 @@ template: |
   - 반드시 아래 JSON 객체 하나만 출력하고, 다른 설명이나 코드 블록(```)을 포함하지 마라.
   
   ### 출력 형식
-  {{"critic_result": "Pass" 또는 "Fail", "critic_reason": "판정 근거를 간략히 설명"}}
+  {{"critic_reason": "판정 근거를 간략히 설명", "critic_result": "Pass" 또는 "Fail"}}
