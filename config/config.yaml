@@ -7,7 +7,7 @@ defaults:
   - prompt/retrieval@prompt.retrieval
   - model/qwen2.5_32b@model.sub_solver
   - model/qwen3_32b@model.main_solver
-
+  - model/qwen2.5_7b_it@model.router
 system:
   device: "cuda"
   seed: 42
