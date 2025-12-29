@@ -1,5 +1,4 @@
 # @package model.router
-
 name: "router-llm"
 
 path: "Qwen/Qwen2.5-7B-Instruct"
