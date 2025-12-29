@@ -11,7 +11,10 @@ class AgentState(TypedDict):
     
     # Solver에게 던져질 완성된 프롬프트
     final_prompt_messages: List[Any] 
-    solver_results: List[Dict[str, Any]] # 10개 답안
+    solver_results: List[Dict[Any, str]] # 10개 답안{"answer", "reasoning"}
     
+    # --- critic 결과 데이터 ---
+    critic_results: List[Dict[str, str]] # 10개 답안의 critic 결과{"critic_result", "critic_reason"}
+
     # --- 최종 결과 ---
     final_answer: Optional[int]
