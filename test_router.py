@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 from omegaconf import OmegaConf
 
 from src.agent.nodes.router import RouterNode
+import os, sys
+from src.utils.config_loader import load_config
 
 load_dotenv()
 
@@ -45,7 +47,13 @@ def test_router():
     # =========================
     # 5. 데이터 로드
     # =========================
-    df = pd.read_csv("/data/ephemeral/home/data/train.csv")
+    project_root = os.path.abspath(".")
+    if project_root not in sys.path:
+        sys.path.append(project_root)
+
+    cfg = load_config()
+    real_data_path = os.path.join(project_root, cfg.path.data.test)
+    df = pd.read_csv(real_data_path)
     samples = df.sample(n=3, random_state=42)
 
     # =========================
