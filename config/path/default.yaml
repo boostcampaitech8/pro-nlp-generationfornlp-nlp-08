@@ -1,6 +1,0 @@
-# @package path
-data:
-  validate: "data/processed/val_stratified_v1.csv"
-  train: "data/processed/train_stratified_v1.csv"
-  test: "data/raw/test.csv"
-  output: "outputs/submission.csv"
