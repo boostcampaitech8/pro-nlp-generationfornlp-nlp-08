@@ -15,4 +15,4 @@ system: |
   - JSON 외의 다른 텍스트를 출력하지 마라.
 
   출력 형식:
-  {"category": "READING", "is_rag_required": false}
+  {{"category": "READING", "is_rag_required": false}}
