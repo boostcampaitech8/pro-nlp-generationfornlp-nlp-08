@@ -1,6 +1,7 @@
 import torch
 from omegaconf import DictConfig
 from src.model.factory import ModelFactory
+from transformers import TextStreamer
 
 class BaseLLMNode:
     """
@@ -70,7 +71,8 @@ class BaseLLMNode:
         text = self.tokenizer.apply_chat_template(
             messages,
             tokenize=False,
-            add_generation_prompt=True
+            add_generation_prompt=True,
+            enable_thinking = False
         )
         
         # 3. 토크나이징 및 GPU 이동
@@ -82,7 +84,8 @@ class BaseLLMNode:
         with torch.no_grad():
             outputs = self.model.generate(
                 **inputs,
-                **self.gen_params  # YAML에 설정된 top_p, temp 등이 여기서 적용됨
+                **self.gen_params,  # YAML에 설정된 top_p, temp 등이 여기서 적용됨
+                streamer = TextStreamer(self.tokenizer, skip_prompt = True),
             )
             
         # 5. 디코딩 (Decoding)

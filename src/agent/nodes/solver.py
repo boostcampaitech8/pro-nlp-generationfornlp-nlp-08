@@ -1,4 +1,5 @@
 # src/agent/nodes/solver.py
+import json
 import re
 import random
 from typing import List, Tuple
@@ -7,11 +8,9 @@ from .base import BaseLLMNode
 
 class SolverNode(BaseLLMNode):
     """
-    Module 3. Dual Solver Engine with TTA
+    Module 3. Solver Engine with TTA
 
-    "다양한 관점에서 문제를 동시에 풀어보는 집단 지성"
-
-    - 1개의 모델과 5번의 TTA(Test Time Augmentation)를 사용하여 편향을 제거합니다.
+    - 5번의 TTA를 사용하여 편향을 제거합니다.
     - 선지의 순서를 무작위로 섞은 5가지 버전을 생성하고, 각각에 대해 답안을 생성합니다.
     - Index Remapping을 통해 섞인 선지에서 고른 답을 원본 번호로 변환합니다.
     """
@@ -34,62 +33,47 @@ class SolverNode(BaseLLMNode):
 
         # Track 정보와 RAG 컨텍스트 가져오기
         track_info = state.get("track_info", {})
-        is_rag_required = track_info.get("is_rag_required","false")
-        category = track_info.get("category","others")
-        track = "track_a" if is_rag_required == "false" else "track_b"
+        is_rag_required = track_info.get("is_rag_required", False)
+        track = "track_b" if is_rag_required else "track_a"
+        
         retrieved_context = state.get("retrieved_context", [])
         context = "\n".join(retrieved_context) if retrieved_context else ""
 
-        print(f"🤖 [Solver] TTA 기반 추론 시작...")
-        print(f"   - 트랙: {track}")
-        print(f"   - 선지 수: {len(choices)}개")
-        print(f"   - TTA 버전: {self.NUM_TTA_VERSIONS}개 생성 예정")
+        print(f"🤖 [Solver] TTA 기반 추론 시작 (Track: {track}, Choice N: {len(choices)})")
 
         # 2. TTA: 5가지 선지 순서 변형 생성
         tta_versions = self._generate_tta_versions(choices)
-
-        # 3. 각 버전에 대해 추론 수행
         solver_results = []
 
+        # 3. 각 버전에 대해 추론 수행
         for version_idx, (shuffled_choices, original_indices) in enumerate(tta_versions):
             print(f"   ▶️ [TTA V{version_idx + 1}] 추론 중... (순서: {original_indices})")
 
-            # 선지 문자열 생성
-            choices_str = self._format_choices(shuffled_choices)
+            choices_str = self._format_choices(shuffled_choices) # 선지 문자열 생성
+            template = self.templates.get(track, self.templates["track_a"]) # 적절한 템플릿 선택 및 프롬프트 생성
 
-            # 적절한 템플릿 선택 및 프롬프트 생성
-            template = self.templates.get(track, self.templates["track_a"])
+            # 입력 변수 동적 구성
+            input_kwargs = {
+                "category": track_info.get("category", "others"),
+                "paragraph": paragraph,
+                "question": question,
+                "choices": choices_str
+            }
+            if track == "track_b":
+                input_kwargs["context"] = context
 
             # LLM 호출
-            if track == "track_b" and context:
-                raw_output = self.generate(
-                    template,
-                    paragraph=paragraph,
-                    question=question,
-                    choices=choices_str,
-                    context=context
-                )
-            else:
-                raw_output = self.generate(
-                    template,
-                    paragraph=paragraph,
-                    question=question,
-                    choices=choices_str
-                )
+            raw_output = self.generate(template, **input_kwargs)
 
             # 4. 답안 파싱 및 Index Remapping
-            shuffled_answer = self._parse_answer(raw_output)
+            reasoning, shuffled_answer = self._parse_answer(raw_output)
             original_answer = self._remap_index(shuffled_answer, original_indices)
 
             print(f"      ↳ 셔플된 답: {shuffled_answer} → 원본 답: {original_answer}")
 
             solver_results.append({
-                "model": "main_solver",
-                "version": version_idx + 1,
-                "shuffled_order": original_indices,
-                "shuffled_answer": shuffled_answer,
+                "reasoning": reasoning,
                 "answer": original_answer,
-                "raw_output": raw_output
             })
 
         print(f"✅ [Solver] {len(solver_results)}개 답안 생성 완료!")
@@ -136,42 +120,57 @@ class SolverNode(BaseLLMNode):
 
     def _parse_answer(self, raw_output: str) -> int:
         """
-        LLM 출력에서 답안 번호를 추출합니다.
+        LLM 출력에서 JSON을 파싱하여 답안 번호를 추출합니다.
 
-        다양한 형식 지원:
-        - "정답: 3", "정답은 3번입니다", "3번", "③" 등
+        예상 형식: {"reasoning": "...", "answer": 3}
         """
-        # <think> 태그 제거
-        clean_output = re.sub(r'<think>.*?</think>', '', raw_output, flags=re.DOTALL)
+        # 1. <think> 태그 제거
+        clean_output = re.sub(r'<think>.*?</think>', '', raw_output, flags=re.DOTALL).strip()
+        parsed_answer = None
+        parsed_reasoning = ""
 
-        # 원문자 숫자 매핑 (①②③④⑤)
-        circled_numbers = {'①': 1, '②': 2, '③': 3, '④': 4, '⑤': 5}
-        for symbol, num in circled_numbers.items():
-            if symbol in clean_output:
-                return num
+        # 2. JSON 파싱 시도 (가장 바깥쪽 중괄호 탐색)
+        try:
+            start_idx = clean_output.find('{')
+            end_idx = clean_output.rfind('}')
+            
+            if start_idx != -1 and end_idx != -1:
+                json_str = clean_output[start_idx : end_idx + 1]
+                result = json.loads(json_str)
+                
+                # Answer 추출
+                val = result.get("answer")
+                if val is not None:
+                    parsed_answer = int(val)
+                
+                # Reasoning 추출
+                parsed_reasoning = result.get("reasoning", "")
+                
+                # 유효한 범위(1~5)인지 확인 (선지가 5개라고 가정 시)
+                if parsed_answer is not None:
+                    return parsed_reasoning, parsed_answer
 
-        # "정답: N", "정답은 N번", "N번이" 등의 패턴
-        patterns = [
-            r'정답[은:\s]*(\d)',
-            r'(\d)\s*번[이을를]?\s*(정답|입니다|이다|선택)',
-            r'답[은:\s]*(\d)',
-            r'\[(\d)\]',
-            r'(\d)\s*$',  # 마지막 숫자
-        ]
+        except (json.JSONDecodeError, ValueError, TypeError):
+            pass
 
-        for pattern in patterns:
-            match = re.search(pattern, clean_output)
-            if match:
-                return int(match.group(1))
+        # 3. JSON 실패 시 Fallback: 정규식으로 "answer": N 패턴 찾기
+        print(f"      ⚠️ JSON 파싱 실패/미검출, Fallback 시도")
+        
+        answer_match = re.search(r'"answer"\s*:\s*"?(\d+)"?', clean_output, re.IGNORECASE)
+        if answer_match:
+            parsed_answer = int(answer_match.group(1))
+            return clean_output, parsed_answer  # reasoning은 전체 텍스트로 대체
 
-        # 패턴 매칭 실패 시 첫 번째 숫자 추출
-        numbers = re.findall(r'\d', clean_output)
+        # 4. 최후의 수단: 텍스트의 마지막 숫자
+        numbers = re.findall(r'\d+', clean_output)
         if numbers:
-            return int(numbers[0])
+            valid = [int(n) for n in numbers if 1 <= int(n) <= 5]
+            parsed_answer = valid[-1] if valid else int(numbers[-1])
+            return clean_output, parsed_answer
 
-        # 기본값 (파싱 실패)
-        print(f"      ⚠️ 답안 파싱 실패: {clean_output[:100]}...")
-        return 1
+        # 5. 정말 아무것도 못 찾은 경우
+        print(f"      ❌ 답안 파싱 완전 실패. 기본값 1 반환.")
+        return "Parsing Failed", 1
 
     def _remap_index(self, shuffled_answer: int, original_indices: List[int]) -> int:
         """
@@ -185,9 +184,5 @@ class SolverNode(BaseLLMNode):
         Returns:
             원본 문제에서의 정답 번호
         """
-        if 1 <= shuffled_answer <= len(original_indices):
-            return original_indices[shuffled_answer - 1]
-
-        # 범위 초과 시 그대로 반환
-        print(f"      ⚠️ 답안 범위 초과: {shuffled_answer}")
-        return shuffled_answer
+        shuffled_answer = int(shuffled_answer)
+        return original_indices[shuffled_answer - 1]
