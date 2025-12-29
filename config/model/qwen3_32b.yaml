@@ -1,0 +1,16 @@
+path: "unsloth/Qwen3-32B-bnb-4bit"
+name: "Qwen3-32B-4bit" # 로깅이나 출력용 이름
+
+# 양자화 설정
+quantization:
+  load_in_4bit: true
+  bnb_4bit_compute_dtype: "bfloat16"
+  bnb_4bit_use_double_quant: true
+  bnb_4bit_quant_type: "nf4"
+
+# 생성 설정
+generation:
+  max_new_tokens: 4096
+  temperature: 0.2
+  top_p: 0.9
+  do_sample: true
