@@ -39,7 +39,7 @@ unsloth = { git = "https://github.com/unslothai/unsloth.git" }
 
 
 [tool.black]
-line-length = 88           # 한 줄 최대 길이
+line-length = 79           # 한 줄 최대 길이
 target-version = ['py311'] # 프로젝트의 파이썬 버전
 include = '\.(py|pyi|ipynb)$'       # 포맷팅할 파일 확장자
 exclude = '''
