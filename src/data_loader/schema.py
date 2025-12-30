@@ -10,4 +10,5 @@ class Problem(BaseModel):
     paragraph: str = Field(..., description="문제 지문")
     question: str = Field(..., description="문제 질문")
     choices: List[str] = Field(..., description="선택지 목록")
-    answer: Optional[str] = Field(None, description="정답 (있을 경우)")
+    answer: Optional[int] = Field(None, description="정답 (있을 경우)")
+    question_plus: Optional[str] = Field(None, description="질문에 추가된 정보 (있을 경우)")
