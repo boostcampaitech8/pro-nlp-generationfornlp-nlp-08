@@ -114,6 +114,7 @@ if __name__ == "__main__":
   accuracy = accuracy_score(solver.true_answers, solver.pred_answers)
   print(f" F1 Score: {f1:.4f}")
   print(f" Accuracy: {accuracy:.4f}")
+  print(f" Correct Data: {len(log_data) - len(log_wrong_data)}/{len(log_data)}")
 
   wandb.log({
     "f1_score": f1,
