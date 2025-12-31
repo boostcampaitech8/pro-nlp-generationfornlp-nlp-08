@@ -129,17 +129,15 @@ class SolverNode(BaseLLMNode):
             json_str = clean_output[start_idx : end_idx + 1]
             result = json.loads(json_str)
             
-            # Answer 추출
             val = result.get("answer")
             if val is not None:
                 parsed_answer = int(val)
-            
-            # Reasoning 추출
             parsed_reasoning = result.get("reasoning", "")
             
-            # 유효한 범위(1~5)인지 확인 (선지가 5개라고 가정 시)
-            if parsed_answer is not None:
-                return parsed_reasoning, parsed_answer
+        if parsed_answer is None:
+            print(f"parsing error:\n{raw_output[:500]}")
+            parsed_answer = -1 
+        return parsed_reasoning, parsed_answer
 
     def _remap_index(self, shuffled_answer: int, original_indices: List[int]) -> int:
         """
