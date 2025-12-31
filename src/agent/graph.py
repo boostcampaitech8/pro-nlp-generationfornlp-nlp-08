@@ -1,7 +1,4 @@
-from functools import partial
 from langgraph.graph import StateGraph, END
-from transformers import StoppingCriteriaList
-
 from .state import AgentState
 from .nodes import (
     router,
@@ -17,33 +14,14 @@ def build_graph(cfg):
     workflow = StateGraph(AgentState)
 
     # =========================
-    # LangGraph node wrappers
-    # =========================
-    def router_node_lg(state):
-        return router(state, cfg=cfg)
-
-    def retrieval_node_lg(state):
-        return self_querying_retriever(state, cfg=cfg)
-    def prompt_node_lg(state):
-        return prompt(state, cfg=cfg)
-
-    def solver_node_lg(state):
-        return solver(state, cfg=cfg)
-
-    def critic_node_lg(state):
-        return critic(state, cfg=cfg)
-    def ensemble_node_lg(state):
-        return ensemble_node(state, cfg=cfg)
-
-    # =========================
     # Node 등록 (LangGraph 규칙)
     # =========================
-    workflow.add_node("router", router_node_lg)
-    workflow.add_node("retriever", retrieval_node_lg)
-    workflow.add_node("prompt_builder", prompt_node_lg)
-    workflow.add_node("solver", solver_node_lg)
-    workflow.add_node("critic", critic_node_lg)
-    workflow.add_node("ensemble", ensemble_node_lg)
+    workflow.add_node("router", router.RouterNode(cfg))
+    workflow.add_node("retriever", self_querying_retriever.SelfQueryingRetrieverNode(cfg))
+    workflow.add_node("prompt_builder", prompt.PromptBuilderNode(cfg))
+    workflow.add_node("solver", solver.SolverNode(cfg))
+    workflow.add_node("critic", critic.CriticNode(cfg))
+    workflow.add_node("ensemble", ensemble.EnsembleNode(cfg))
 
     # =========================
     # Graph structure
