@@ -24,17 +24,14 @@ def raw_critic_to_json(raw_text: str) -> dict:
     except json.JSONDecodeError:
         return {"critic_result": "Fail", "critic_reason": "JSON 파싱 에러 (형식 불일치)"}
 
-class critic_node(BaseLLMNode):
+class CriticNode(BaseLLMNode):
     def __init__(self, config):
         super().__init__(config, model_name="main_solver")
         self.template = config.prompt.critic.template
 
     def __call__(self, state: dict) -> dict:
         # State에서 필요한 모든 정보 추출
-        paragraph = state.get("paragraph", "")
         problem = state.get("problem", {})
-        question = problem.get("question", "")
-        choices = problem.get("choices", [])
         solver_results = state.get("solver_results", [])
         
         critic_results = []

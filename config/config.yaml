@@ -12,3 +12,6 @@ system:
   device: "cuda"
   seed: 42
   project_name: "CSAT-Solver-Agent"
+
+debug:
+  test_indices: [14, 22, 99, 105]
