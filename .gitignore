@@ -10,3 +10,4 @@ __pycache__/
 src/base/baseline_code.ipynb
 .env
 .langgraph_api
+src/evaluation/wandb

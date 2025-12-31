@@ -15,7 +15,7 @@ class SolverNode(BaseLLMNode):
     - Index Remapping을 통해 섞인 선지에서 고른 답을 원본 번호로 변환합니다.
     """
 
-    NUM_TTA_VERSIONS = 5  # TTA 버전 수
+    NUM_TTA_VERSIONS = 1  # TTA 버전 수
 
     def __init__(self, config):
         super().__init__(config, model_name="main_solver")
@@ -27,9 +27,8 @@ class SolverNode(BaseLLMNode):
     def __call__(self, state: dict) -> dict:
         # 1. State에서 필요한 정보 추출
         paragraph = state.get("paragraph", "")
-        problem = state.get("problem", {})
-        question = problem.get("question", "")
-        choices = problem.get("choices", [])
+        question = state.get("question", "")
+        choices = state.get("choices", [])
 
         # Track 정보와 RAG 컨텍스트 가져오기
         track_info = state.get("track_info", {})
