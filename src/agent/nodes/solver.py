@@ -38,15 +38,12 @@ class SolverNode(BaseLLMNode):
         retrieved_context = state.get("retrieved_context", [])
         context = "\n".join(retrieved_context) if retrieved_context else ""
 
-        print(f"🤖 [Solver] TTA 기반 추론 시작 (Track: {track}, Choice N: {len(choices)})")
-
         # 2. TTA: 5가지 선지 순서 변형 생성
         tta_versions = self._generate_tta_versions(choices)
         solver_results = []
 
         # 3. 각 버전에 대해 추론 수행
         for version_idx, (shuffled_choices, original_indices) in enumerate(tta_versions):
-            print(f"   ▶️ [TTA V{version_idx + 1}] 추론 중... (순서: {original_indices})")
 
             choices_str = self._format_choices(shuffled_choices) # 선지 문자열 생성
             template = self.templates.get(track, self.templates["track_a"]) # 적절한 템플릿 선택 및 프롬프트 생성
@@ -68,14 +65,10 @@ class SolverNode(BaseLLMNode):
             reasoning, shuffled_answer = self._parse_answer(raw_output)
             original_answer = self._remap_index(shuffled_answer, original_indices)
 
-            print(f"      ↳ 셔플된 답: {shuffled_answer} → 원본 답: {original_answer}")
-
             solver_results.append({
                 "reasoning": reasoning,
                 "answer": original_answer,
             })
-
-        print(f"✅ [Solver] {len(solver_results)}개 답안 생성 완료!")
 
         return {"solver_results": solver_results}
 
@@ -129,47 +122,24 @@ class SolverNode(BaseLLMNode):
         parsed_reasoning = ""
 
         # 2. JSON 파싱 시도 (가장 바깥쪽 중괄호 탐색)
-        try:
-            start_idx = clean_output.find('{')
-            end_idx = clean_output.rfind('}')
-            
-            if start_idx != -1 and end_idx != -1:
-                json_str = clean_output[start_idx : end_idx + 1]
-                result = json.loads(json_str)
-                
-                # Answer 추출
-                val = result.get("answer")
-                if val is not None:
-                    parsed_answer = int(val)
-                
-                # Reasoning 추출
-                parsed_reasoning = result.get("reasoning", "")
-                
-                # 유효한 범위(1~5)인지 확인 (선지가 5개라고 가정 시)
-                if parsed_answer is not None:
-                    return parsed_reasoning, parsed_answer
-
-        except (json.JSONDecodeError, ValueError, TypeError):
-            pass
-
-        # 3. JSON 실패 시 Fallback: 정규식으로 "answer": N 패턴 찾기
-        print(f"      ⚠️ JSON 파싱 실패/미검출, Fallback 시도")
+        start_idx = clean_output.find('{')
+        end_idx = clean_output.rfind('}')
         
-        answer_match = re.search(r'"answer"\s*:\s*"?(\d+)"?', clean_output, re.IGNORECASE)
-        if answer_match:
-            parsed_answer = int(answer_match.group(1))
-            return clean_output, parsed_answer  # reasoning은 전체 텍스트로 대체
-
-        # 4. 최후의 수단: 텍스트의 마지막 숫자
-        numbers = re.findall(r'\d+', clean_output)
-        if numbers:
-            valid = [int(n) for n in numbers if 1 <= int(n) <= 5]
-            parsed_answer = valid[-1] if valid else int(numbers[-1])
-            return clean_output, parsed_answer
-
-        # 5. 정말 아무것도 못 찾은 경우
-        print(f"      ❌ 답안 파싱 완전 실패. 기본값 1 반환.")
-        return "Parsing Failed", 1
+        if start_idx != -1 and end_idx != -1:
+            json_str = clean_output[start_idx : end_idx + 1]
+            result = json.loads(json_str)
+            
+            # Answer 추출
+            val = result.get("answer")
+            if val is not None:
+                parsed_answer = int(val)
+            
+            # Reasoning 추출
+            parsed_reasoning = result.get("reasoning", "")
+            
+            # 유효한 범위(1~5)인지 확인 (선지가 5개라고 가정 시)
+            if parsed_answer is not None:
+                return parsed_reasoning, parsed_answer
 
     def _remap_index(self, shuffled_answer: int, original_indices: List[int]) -> int:
         """
