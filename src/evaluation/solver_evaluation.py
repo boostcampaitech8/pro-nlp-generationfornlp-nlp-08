@@ -43,7 +43,7 @@ class SolverEvaluation:
     data_path = os.path.join(self.project_root, self.config.path.data.validate)
     df = pd.read_csv(data_path)
 
-    for _, row in df.iloc[:6].iterrows():
+    for _, row in df.iterrows():
       problems_dict = ast.literal_eval(row['problems'])
       if row['rag'] != 'F':
         continue
@@ -128,5 +128,5 @@ if __name__ == "__main__":
       columns=["id", "reasoning", "pred_answer", "true_answer"]
     ),
   })
-  
+
   wandb.finish()
