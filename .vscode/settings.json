@@ -1,0 +1,16 @@
+{
+    // Python 인터프리터를 uv 가상환경으로 설정
+    "python.defaultInterpreterPath": ".venv/bin/python",
+    
+    // 저장 시 자동으로 Black 포맷팅 적용
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        }
+    },
+    
+    // Black 익스텐션이 프로젝트 내 설치된 black 모듈을 사용하도록 설정
+    "black-formatter.importStrategy": "fromEnvironment"
+}
