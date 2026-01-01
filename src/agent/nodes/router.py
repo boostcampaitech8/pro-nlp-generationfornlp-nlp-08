@@ -9,24 +9,28 @@ class RouterNode(BaseLLMNode):
     """
     문제 유형(category)과 RAG 필요 여부(is_rag_required)를 판별하는 Router 노드
     cfg.prompt.router.system을 사용하여 LLM에 문제 유형 분류 요청
-    1) RAG 필요: {"track_info": {"category": str, "is_rag_required": True}}
-    2) RAG 불필요: {"track_info": {"category": str, "is_rag_required": False}}
+
+    Args:
+        cfg: 설정 객체
+
+    Returns:
+        Dict[str, RouterResult]: 문제 유형과 RAG 필요 여부를 담은 딕셔너리
     """
 
     def __init__(self, cfg):
         super().__init__(cfg, model_name="router")
-        self.prompt_template = cfg.prompt.router.system
+        self.prompt_template = cfg.prompt.router.template
 
     @traceable(name="RouterNode")
-    def __call__(self, state: AgentState) -> Dict:
+    def __call__(self, state: AgentState) -> Dict[str, RouterResult]:
         raw_output = self.generate(
             self.prompt_template,
             paragraph=state["problem"].paragraph,
             question=state["problem"].question,
         ).strip()
         parsed = extract_json_from_text(raw_output)
-        track_info = RouterResult(
+        track_info_result = RouterResult(
             category=parsed["category"],
             is_rag=parsed["is_rag_required"],
         )
-        return {"track_info": track_info}
+        return {"track_info": track_info_result}

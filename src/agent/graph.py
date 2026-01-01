@@ -18,7 +18,7 @@ def build_graph(cfg):
     # =========================
     workflow.add_node("router", router.RouterNode(cfg))
     workflow.add_node("retriever", self_querying_retriever.SelfQueryingRetrieverNode(cfg))
-    workflow.add_node("prompt_builder", prompt.PromptBuilderNode(cfg))
+    # workflow.add_node("prompt_builder", prompt.PromptBuilderNode(cfg))
     workflow.add_node("solver", solver.SolverNode(cfg))
     workflow.add_node("critic", critic.CriticNode(cfg))
     workflow.add_node("ensemble", ensemble.EnsembleNode(cfg))

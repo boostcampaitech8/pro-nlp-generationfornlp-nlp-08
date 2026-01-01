@@ -25,7 +25,7 @@ class EnsembleResult(TypedDict):
 class AgentState(TypedDict):
     problem: Problem
     track_info: RouterResult
-    retrival_results: List[RetrievalResult]
+    retrieval_results: List[RetrievalResult]
     solver_results: List[SolverResult]
     critic_results: List[CriticResult]
     final_answer: EnsembleResult
