@@ -71,8 +71,9 @@ class BaseLLMNode:
             add_generation_prompt=True,
             # enable_thinking=enable_thinking # think tag가 기본적으로 닫히는 버그 있음!
         )
-        if enable_thinking and self.tokenizer.think_tag_open:
-            text += self.tokenizer.think_tag_open
+
+        if enable_thinking:
+            text += "<think>\n"
 
         print("======LLM Input=========\n", text)
         inputs = self.tokenizer(text, return_tensors="pt").to(

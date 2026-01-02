@@ -19,10 +19,6 @@ class SolverNode(BaseLLMNode):
 
     def __init__(self, config):
         super().__init__(config, model_name="main_solver")
-        self.templates = {
-            "track_a": config.prompt.solver.track_a,
-            "track_b": config.prompt.solver.track_b,
-        }
 
     def __call__(self, state: dict) -> dict:
         # 1. State에서 필요한 정보 추출

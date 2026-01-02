@@ -1,7 +1,6 @@
 from typing import Dict
 from src.agent.state import AgentState, PromptResult
-from langchain_core.messages import SystemMessage, HumanMessage
-
+from langsmith import traceable
 
 class PromptNode:
     """
@@ -10,46 +9,39 @@ class PromptNode:
 
     Args:
         cfg: 설정 객체
-
-    Returns:
-        Dict[str, List[BaseMessage]]: 최종 프롬프트 메시지 리스트를 담은 딕셔너리
     """
 
     def __init__(self, cfg):
         self.cfg = cfg
 
-    def __call__(self, state: AgentState):
-
-        # 데이터 추출
-        paragraph = state["paragraph"]
-        question = state["problem"]["question"]
-        choices = "\n".join(state["problem"]["choices"])
-
-        formatted_text = ""
+    @traceable(name="PromptNode")
+    def __call__(self, state: AgentState) -> Dict[str, PromptResult]:
 
         # Config에서 템플릿 가져오기 (cfg.prompt.solver 활용)
         if state["track_info"].get("is_rag_required"):
             # Track B: RAG 포함
-            template = cfg.prompt.solver.track_b
-            context_str = "\n".join(state.get("retrieved_context", []))
+            system_prompt = self.cfg.prompt.solver.track_b.system
+            user_prompt_template = self.cfg.prompt.solver.track_b.user
+            context_str = ""
+            for i, document in enumerate(state["retrieval_results"]):
+                context_str += f"[context_{i+1}: {document['title']}]\n{document['body']}\n\n"
 
-            formatted_text = template.format(
+            user_prompt = user_prompt_template.format(
                 context=context_str,
-                paragraph=paragraph,
-                question=question,
-                choices=choices,
+                pragraph = state["problem"].paragraph,
+                question=state["problem"].question,
+                choices=", ".join(
+                    [f"{i+1}. {c}" for i, c in enumerate(state["problem"].choices)]
+                ),
             )
         else:
-            # Track A: 지문만 사용
-            template = cfg.prompt.solver.track_a
-            formatted_text = template.format(
-                paragraph=paragraph, question=question, choices=choices
+            system_prompt = self.cfg.prompt.solver.track_a.system
+            user_prompt_template = self.cfg.prompt.solver.track_a.user
+            user_prompt = user_prompt_template.format(
+                paragraph=state["problem"].paragraph,
+                question=state["problem"].question,
+                choices=", ".join(
+                    [f"{i+1}. {c}" for i, c in enumerate(state["problem"].choices)]
+                ),
             )
-
-        # Chat Model용 메시지 객체 생성
-        messages = [
-            SystemMessage(content="당신은 입시 문제 풀이 AI입니다."),
-            HumanMessage(content=formatted_text),
-        ]
-
-        return {"final_prompt_messages": messages}
+        return {"solver_prompt": PromptResult(system_prompt=system_prompt, user_prompt=user_prompt)}

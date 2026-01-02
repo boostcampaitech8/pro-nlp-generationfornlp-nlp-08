@@ -10,7 +10,8 @@ class RetrievalResult(TypedDict):
     body: str
 
 class PromptResult(TypedDict):
-    prompt: str
+    system_prompt: str
+    user_prompt: str
 
 class SolverResult(TypedDict):
     answer: str
@@ -27,6 +28,7 @@ class AgentState(TypedDict):
     problem: Problem
     track_info: RouterResult
     retrieval_results: List[RetrievalResult]
+    solver_prompt: PromptResult
     solver_results: List[SolverResult]
     critic_results: List[CriticResult]
     final_answer: EnsembleResult
