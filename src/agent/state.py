@@ -3,7 +3,7 @@ from src.data_loader.schema import Problem
 
 class RouterResult(TypedDict):
     category: str
-    is_rag: bool
+    is_rag_required: bool
 
 class RetrievalResult(TypedDict):
     context: str

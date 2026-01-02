@@ -13,9 +13,6 @@ from .nodes import (
 def build_graph(cfg):
     workflow = StateGraph(AgentState)
 
-    # =========================
-    # Node 등록 (LangGraph 규칙)
-    # =========================
     workflow.add_node("router", router.RouterNode(cfg))
     workflow.add_node("retriever", self_querying_retriever.SelfQueryingRetrieverNode(cfg))
     # workflow.add_node("prompt_builder", prompt.PromptBuilderNode(cfg))
@@ -23,9 +20,6 @@ def build_graph(cfg):
     workflow.add_node("critic", critic.CriticNode(cfg))
     workflow.add_node("ensemble", ensemble.EnsembleNode(cfg))
 
-    # =========================
-    # Graph structure
-    # =========================
     workflow.set_entry_point("router")
 
     workflow.add_conditional_edges(

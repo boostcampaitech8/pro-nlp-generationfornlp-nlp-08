@@ -19,7 +19,8 @@ class RouterNode(BaseLLMNode):
 
     def __init__(self, cfg):
         super().__init__(cfg, model_name="router")
-        self.prompt_template = cfg.prompt.router.template
+        self.system_prompt = cfg.prompt.router.system
+        self.prompt_template = cfg.prompt.router.user
 
     @traceable(name="RouterNode")
     def __call__(self, state: AgentState) -> Dict[str, RouterResult]:
@@ -27,10 +28,11 @@ class RouterNode(BaseLLMNode):
             self.prompt_template,
             paragraph=state["problem"].paragraph,
             question=state["problem"].question,
+            choices=", ".join(state["problem"].choices),
         ).strip()
         parsed = extract_json_from_text(raw_output)
         track_info_result = RouterResult(
             category=parsed["category"],
-            is_rag=parsed["is_rag_required"],
+            is_rag_required=parsed["is_rag_required"],
         )
         return {"track_info": track_info_result}
