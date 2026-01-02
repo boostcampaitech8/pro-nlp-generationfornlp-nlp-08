@@ -20,12 +20,13 @@ class RouterNode(BaseLLMNode):
     def __init__(self, cfg):
         super().__init__(cfg, model_name="router")
         self.system_prompt = cfg.prompt.router.system
-        self.prompt_template = cfg.prompt.router.user
+        self.user_template = cfg.prompt.router.user
 
     @traceable(name="RouterNode")
     def __call__(self, state: AgentState) -> Dict[str, RouterResult]:
         raw_output = self.generate(
-            self.prompt_template,
+            user_prompt = self.user_template,
+            system_prompt=self.system_prompt,
             paragraph=state["problem"].paragraph,
             question=state["problem"].question,
             choices=", ".join(state["problem"].choices),

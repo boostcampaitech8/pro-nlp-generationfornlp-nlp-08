@@ -19,7 +19,8 @@ class RetrievalNode(BaseLLMNode):
     """
     def __init__(self, config):
         super().__init__(config, model_name="main_solver")
-        self.template = config.prompt.retrieval.template
+        self.system_prompt = config.prompt.retrieval.system
+        self.user_prompt = config.prompt.retrieval.user
 
     @traceable(name="RetrievalNode")
     def __call__(self, state: AgentState) -> Dict[str, List[RetrievalResult]]:
@@ -28,7 +29,8 @@ class RetrievalNode(BaseLLMNode):
         )
 
         raw_output = self.generate(
-            self.template,
+            user_prompt = self.user_prompt,
+            system_prompt=self.system_prompt,
             paragraph=state["problem"].paragraph,
             question=state["problem"].question,
             choices=choices_str,
