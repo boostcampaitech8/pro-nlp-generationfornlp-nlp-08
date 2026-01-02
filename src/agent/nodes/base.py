@@ -73,7 +73,6 @@ class BaseLLMNode:
         input_len = inputs["input_ids"].shape[1]
         generated_tokens = outputs[0][input_len:]
         
-        # 숫자를 다시 사람이 읽을 수 있는 문자열로 변환합니다.
         decoded_output = self.tokenizer.decode(generated_tokens, skip_special_tokens=True)
         
         return decoded_output
