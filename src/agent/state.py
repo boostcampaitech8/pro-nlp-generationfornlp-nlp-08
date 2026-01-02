@@ -6,7 +6,8 @@ class RouterResult(TypedDict):
     is_rag_required: bool
 
 class RetrievalResult(TypedDict):
-    context: str
+    title: str
+    body: str
 
 class PromptResult(TypedDict):
     prompt: str

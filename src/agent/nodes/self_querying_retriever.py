@@ -1,7 +1,7 @@
 from langsmith import traceable
 from typing import List, Dict
 from .base import BaseLLMNode
-from src.utils.tools import search_wikipedia
+from src.utils.tools import duckduckgo_search
 from src.utils.text import extract_json_from_text
 from src.agent.state import AgentState, RetrievalResult
 
@@ -41,6 +41,6 @@ class RetrievalNode(BaseLLMNode):
         search_results = []
         for keyword in keywords:
             keyword = keyword[:100]
-            search_results.append(RetrievalResult(context=search_wikipedia(keyword)))
+            search_results.extend([RetrievalResult(**result) for result in duckduckgo_search(keyword)])
 
         return {"retrieval_results": search_results}
