@@ -33,7 +33,7 @@ class EnsembleNode:
         vote_counts = Counter(voting_targets)
         final_choice, count = vote_counts.most_common(1)[0]
         
-        print(f"전략: {strategy} | 결과: {final_choice} (득표: {count}/{len(voting_targets)})")
+        # print(f"전략: {strategy} | 결과: {final_choice} (득표: {count}/{len(voting_targets)})")
 
         # 결과 반환
         return {"final_answer": int(final_choice)}

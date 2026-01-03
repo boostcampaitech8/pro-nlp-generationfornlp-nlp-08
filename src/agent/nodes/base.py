@@ -26,7 +26,8 @@ class BaseLLMNode:
             raise ValueError(
                 f"❌ [No such model] '{model_name}'에 해당하는 모델 설정이 cfg.model에 없습니다."
             )
-        self.config = cfg
+        self.cfg = cfg
+        self.verbose = cfg.debug.get("verbose", False)
         self.model_factory = ModelFactory(cfg.model)
         self.model_name = model_name
         self.gen_params = cfg.model[model_name].get("generation_params", {})
@@ -51,49 +52,63 @@ class BaseLLMNode:
             str: 모델이 생성한 순수 텍스트 답변 (특수 토큰 제외)
         """
 
-        if kwargs:
-            try:
-                formatted_content = user_prompt.format(**kwargs)
-            except KeyError as e:
-                raise KeyError(
-                    f"❌ [Formatting Error] user_prompt 포맷팅 중 누락된 키: {e}"
-                )
-        else:
-            formatted_content = user_prompt
+        try:
+            if kwargs:
+                try:
+                    formatted_content = user_prompt.format(**kwargs)
+                except KeyError as e:
+                    raise KeyError(
+                        f"❌ [Formatting Error] user_prompt 포맷팅 중 누락된 키: {e}"
+                    )
+            else:
+                formatted_content = user_prompt
 
-        messages = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": formatted_content})
+            messages = []
+            if system_prompt:
+                messages.append({"role": "system", "content": system_prompt})
+            messages.append({"role": "user", "content": formatted_content})
 
-        model, tokenizer = self.model_factory.get_model(self.model_name)
+            model, tokenizer = self.model_factory.get_model(self.model_name)
 
-        text = tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True,
-            # enable_thinking=enable_thinking # think tag가 기본적으로 닫히는 버그 있음!
-        )
-
-        if enable_thinking:
-            text += "<think>\n"
-
-        print("======LLM Input=========\n", text)
-        inputs = tokenizer(text, return_tensors="pt").to(model.device)
-        print("======LLM Output=========")
-        with torch.no_grad():
-            outputs = model.generate(
-                **inputs,
-                **self.gen_params,
-                streamer=TextStreamer(tokenizer, skip_prompt=True),
+            text = tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=True,
+                # enable_thinking=enable_thinking # think tag가 기본적으로 닫히는 버그 있음!
             )
-        input_len = inputs["input_ids"].shape[1]
-        generated_tokens = outputs[0][input_len:]
 
-        decoded_output = tokenizer.decode(
-            generated_tokens, skip_special_tokens=True
-        )
+            if enable_thinking:
+                text += "<think>\n"
 
-        free_gpu_memory(model, tokenizer)
+            if self.verbose:
+                print("======LLM Input=========\n", text)
+                print("======LLM Output=========")
+                streamer = TextStreamer(tokenizer, skip_prompt=True)
+            else:
+                streamer = None
+
+            inputs = tokenizer(text, return_tensors="pt").to(model.device)
+            with torch.no_grad():
+                outputs = model.generate(
+                    **inputs,
+                    **self.gen_params,
+                    streamer=streamer,
+                )
+            input_len = inputs["input_ids"].shape[1]
+            generated_tokens = outputs[0][input_len:]
+
+            decoded_output = tokenizer.decode(
+                generated_tokens, skip_special_tokens=True
+            )
+        except Exception as e:
+            print(f"❌ [LLM Generation Error] {e}")
+            raise e
+        finally:
+            free_gpu_memory(model, tokenizer)
+
+            if model:
+                del model
+            if tokenizer:
+                del tokenizer
 
         return decoded_output

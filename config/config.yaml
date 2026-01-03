@@ -15,3 +15,4 @@ system:
 
 debug:
   test_indices: [14, 22, 99, 105]
+  verbose: false
