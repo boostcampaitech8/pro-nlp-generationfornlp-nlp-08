@@ -11,7 +11,7 @@ load_dotenv()  # langsmith 설정을 위해
 @hydra.main(version_base=None, config_path="config", config_name="config")
 def main(cfg: DictConfig):
     app = build_graph(cfg)
-    dataset = load_dataset(cfg.path.validation)
+    dataset = load_dataset(cfg.path.data.validate)
     for i in cfg.debug.test_indices:
         print(f"--- Test Index: {i} ---")
         data = dataset[i]

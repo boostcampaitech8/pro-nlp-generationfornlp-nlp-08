@@ -18,8 +18,8 @@ class SolverResult(TypedDict):
     reasoning: str
 
 class CriticResult(TypedDict):
-    evaluation: str
-    feedback: str
+    critic_result: str
+    critic_reason: str
 
 class EnsembleResult(TypedDict):
     final_answer: Optional[int]

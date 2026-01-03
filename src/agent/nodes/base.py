@@ -3,6 +3,7 @@ from omegaconf import DictConfig
 from src.model.factory import ModelFactory
 from transformers import TextStreamer
 from langsmith import traceable
+from src.utils.memory import free_gpu_memory
 
 
 class BaseLLMNode:
@@ -21,14 +22,14 @@ class BaseLLMNode:
     """
 
     def __init__(self, cfg: DictConfig, model_name: str = "main_solver"):
-        if model_name in cfg.model:
-            self.factory = ModelFactory(cfg.model)
-            self.model, self.tokenizer = self.factory.get_model(model_name)
-            self.gen_params = cfg.model[model_name].generation
-        else:
+        if model_name not in cfg.model:
             raise ValueError(
                 f"❌ [No such model] '{model_name}'에 해당하는 모델 설정이 cfg.model에 없습니다."
             )
+        self.config = cfg
+        self.model_factory = ModelFactory(cfg.model)
+        self.model_name = model_name
+        self.gen_params = cfg.model[model_name].get("generation_params", {})
 
     @traceable(name="BaseLLMNode.generate")
     def generate(
@@ -65,7 +66,9 @@ class BaseLLMNode:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": formatted_content})
 
-        text = self.tokenizer.apply_chat_template(
+        model, tokenizer = self.model_factory.get_model(self.model_name)
+
+        text = tokenizer.apply_chat_template(
             messages,
             tokenize=False,
             add_generation_prompt=True,
@@ -76,21 +79,21 @@ class BaseLLMNode:
             text += "<think>\n"
 
         print("======LLM Input=========\n", text)
-        inputs = self.tokenizer(text, return_tensors="pt").to(
-            self.model.device
-        )
+        inputs = tokenizer(text, return_tensors="pt").to(model.device)
         print("======LLM Output=========")
         with torch.no_grad():
-            outputs = self.model.generate(
+            outputs = model.generate(
                 **inputs,
                 **self.gen_params,
-                streamer=TextStreamer(self.tokenizer, skip_prompt=True),
+                streamer=TextStreamer(tokenizer, skip_prompt=True),
             )
         input_len = inputs["input_ids"].shape[1]
         generated_tokens = outputs[0][input_len:]
 
-        decoded_output = self.tokenizer.decode(
+        decoded_output = tokenizer.decode(
             generated_tokens, skip_special_tokens=True
         )
+
+        free_gpu_memory(model, tokenizer)
 
         return decoded_output
