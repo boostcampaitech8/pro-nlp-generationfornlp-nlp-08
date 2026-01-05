@@ -4,6 +4,8 @@ from src.model.factory import ModelFactory
 from transformers import TextStreamer
 from langsmith import traceable
 from src.utils.memory import free_gpu_memory
+import gc
+
 
 
 class BaseLLMNode:
@@ -46,11 +48,14 @@ class BaseLLMNode:
         Args:
             user_prompt (str): 사용자 메시지 (실제 질문이나 요청 내용)
             system_prompt (str): 시스템 메시지 (모델에게 역할을 지시하는 용도)
-            enable_thinking (bool): '생각하는' 프롬프트 기법 활성화 여부
+            enable_thinking (bool): 생각하는 프롬프트 기법 활성화 여부
             **kwargs: user_prompt 내에 포맷팅할 변수들
         Returns:
             str: 모델이 생성한 순수 텍스트 답변 (특수 토큰 제외)
         """
+        model = None
+        tokenizer = None
+        streamer = None
 
         try:
             if kwargs:
@@ -74,11 +79,11 @@ class BaseLLMNode:
                 messages,
                 tokenize=False,
                 add_generation_prompt=True,
-                # enable_thinking=enable_thinking # think tag가 기본적으로 닫히는 버그 있음!
+                enable_thinking=enable_thinking
             )
 
-            if enable_thinking:
-                text += "<think>\n"
+            # if enable_thinking:
+                # text += "<think>\n"
 
             if self.verbose:
                 print("======LLM Input=========\n", text)
@@ -104,11 +109,15 @@ class BaseLLMNode:
             print(f"❌ [LLM Generation Error] {e}")
             raise e
         finally:
-            free_gpu_memory(model, tokenizer)
-
-            if model:
+            if model is not None:
                 del model
-            if tokenizer:
+            if tokenizer is not None:
                 del tokenizer
+            if streamer is not None:
+                del streamer
+            # free_gpu_memory()
+            gc.collect()
+            torch.cuda.empty_cache() 
+            torch.cuda.synchronize()
 
         return decoded_output

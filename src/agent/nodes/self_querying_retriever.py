@@ -21,6 +21,7 @@ class RetrievalNode(BaseLLMNode):
         super().__init__(config, model_name="main_solver")
         self.system_prompt = config.prompt.retrieval.system
         self.user_prompt = config.prompt.retrieval.user
+        self.enable_thinking = config.prompt.retrieval.strategy.get("enable_thinking", False)
 
     @traceable(name="RetrievalNode")
     def __call__(self, state: AgentState) -> Dict[str, List[RetrievalResult]]:
@@ -31,6 +32,7 @@ class RetrievalNode(BaseLLMNode):
         raw_output = self.generate(
             user_prompt = self.user_prompt,
             system_prompt=self.system_prompt,
+            enable_thinking=False,
             paragraph=state["problem"].paragraph,
             question=state["problem"].question,
             choices=choices_str,

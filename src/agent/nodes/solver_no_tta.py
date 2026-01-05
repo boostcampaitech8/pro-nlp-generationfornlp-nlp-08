@@ -11,6 +11,7 @@ class SolverNode(BaseLLMNode):
 
     def __init__(self, config):
         super().__init__(config, model_name="main_solver")
+        self.enable_thinking = config.prompt.solver.strategy.get("enable_thinking", False)
 
     @traceable(name="SolverNode")
     def __call__(self, state: AgentState) -> Dict[str, EnsembleResult]:
