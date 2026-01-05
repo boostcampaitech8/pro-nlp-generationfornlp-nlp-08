@@ -10,6 +10,7 @@ defaults:
   - model/qwen2.5_32b@model.sub_solver
   - model/qwen3_32b@model.main_solver
   - model/qwen2.5_7b_it@model.router
+  - model/bge_m3@model.bge_m3
 system:
   device: "cuda"
   seed: 42

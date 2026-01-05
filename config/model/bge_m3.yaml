@@ -1,0 +1,16 @@
+path: "BAAI/bge-m3"
+name: "bge-m3"
+
+model_kwargs:
+  use_fp16: true
+
+encode_kwargs:
+  return_dense: true
+  return_sparse: true
+  max_length: 1024
+  batch_size: 64
+
+retriever:
+  dense_weight: 0.7
+  sparse_weight: 0.3
+  top_k: 5
