@@ -1,3 +1,5 @@
+seed: 42
+
 defaults:
   - _self_
   - path: default
@@ -13,3 +15,7 @@ system:
   device: "cuda"
   seed: 42
   project_name: "CSAT-Solver-Agent"
+
+debug:
+  test_indices: [53, 54, 56, 70]
+  verbose: false

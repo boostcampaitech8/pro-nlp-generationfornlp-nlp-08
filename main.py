@@ -1,32 +1,45 @@
 import hydra
-from omegaconf import DictConfig, OmegaConf
+from typing import cast
+from omegaconf import DictConfig
 from src.agent.graph import build_graph
 from dotenv import load_dotenv
+from src.data_loader.data_loader import load_dataset
+from src.agent.state import AgentState
+import os
+import random
+import numpy as np
+import torch
 
-load_dotenv()  # .env 파일에서 환경 변수 로드
+
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+load_dotenv()
+
 
 @hydra.main(version_base=None, config_path="config", config_name="config")
 def main(cfg: DictConfig):
-    print(f"🔥 System Initializing... Model: {cfg.model.name}")
-    print(f"⚙️  Prompt Loaded: {list(cfg.prompt.keys())}") # router, solver, critic 로드 확인
-
-    # Hydra 설정을 그래프에 주입하여 빌드
+    set_seed(cfg.seed)
     app = build_graph(cfg)
-    
-    # 테스트용 입력 데이터
-    inputs = {
-        "paragraph": "신라 하기는 진골 귀족의 왕위 쟁탈전이 심화되던 시기이다...",
-        "problem": {
-            "question": "윗글의 시기에 일어난 사건으로 적절한 것은?", 
-            "choices": ["1. 적고적의 난", "2. 웅진 천도", "3. 묘청의 난"]
-        }
-    }
-    
-    # 실행
-    result = app.invoke(inputs)
-    
-    print("-" * 50)
-    print(f"✅ Final Result: {result.get('final_answer')}")
+    dataset = load_dataset(cfg.path.data.validate)
+    for i in cfg.debug.test_indices:
+        print(f"--- Test Index: {i} ---")
+        data = dataset[i]
+        app.invoke(cast(AgentState, {"problem": data}))
+
+def set_seed(seed: int) -> None:
+    '''
+    시드를 고정하여 실험의 재현성을 확보
+    Args:
+        param seed: 
+        type seed: int
+    '''
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    # torch.cuda.manual_seed_all(seed)  # 멀티 GPU 환경일 경우
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 if __name__ == "__main__":
     main()

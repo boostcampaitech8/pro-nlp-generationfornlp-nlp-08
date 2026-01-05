@@ -16,7 +16,7 @@ model_kwargs:
     trust_remote_code: true
 
 generation:
-  max_new_tokens: 128
+  max_new_tokens: 4096
   temperature: 0.0
   do_sample: false
 

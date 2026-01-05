@@ -1,9 +1,14 @@
-from typing import TypedDict, List, Optional
+from typing import List, Optional
+from pydantic import BaseModel, Field
 
-class MCQSample(TypedDict):
-    id: str
-    paragraph: str
-    question: str
-    choices: List[str]
-    answer: Optional[str]
-    question_plus: Optional[str]
+class Problem(BaseModel):
+    """
+    하나의 수능 문제 데이터를 정의하는 스키마
+    CSV의 한 행에 해당하는 데이터 구조
+    """
+    id: str = Field(..., description="문제의 고유 식별자")
+    paragraph: str = Field(..., description="문제 지문")
+    question: str = Field(..., description="문제 질문")
+    choices: List[str] = Field(..., description="선택지 목록")
+    answer: Optional[int] = Field(None, description="정답 (있을 경우)")
+    question_plus: Optional[str] = Field(None, description="질문에 추가된 정보 (있을 경우)")

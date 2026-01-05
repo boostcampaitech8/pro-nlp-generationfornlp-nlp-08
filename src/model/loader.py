@@ -2,42 +2,43 @@
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from omegaconf import DictConfig
+from src.utils.memory import free_gpu_memory
 
 class HuggingFaceLoader:
     def __init__(self, config: DictConfig):
         """
-        config: model/qwen_32b.yaml 등의 내용이 담긴 DictConfig
+        Args:
+            config (DictConfig): Hydra 설정 객체
         """
         self.config = config
 
     def load(self):
-        print(f"🔄 [Loader] 모델 로딩 시작: {self.config.name} ({self.config.path})")
+        """
+        HuggingFace 모델과 토크나이저를 로드하는 함수
+        Returns:
+            model, tokenizer: 로드된 모델과 토크나이저 객체
+        """
+        free_gpu_memory()
 
-        # 1. 양자화(Quantization) 설정 처리
+        # 양자화 설정
         bnb_config = None
         if "quantization" in self.config and self.config.quantization:
-            print("   ↳ ⚡ 양자화 설정 적용 중...")
             q_params = dict(self.config.quantization)
             
-            # 문자열 "bfloat16"을 실제 torch.bfloat16 타입으로 변환
             if q_params.get("bnb_4bit_compute_dtype") == "bfloat16":
                 q_params["bnb_4bit_compute_dtype"] = torch.bfloat16
             
             bnb_config = BitsAndBytesConfig(**q_params)
 
-        # 2. 모델 로드 인자 준비
         model_kwargs = {
             "device_map": "auto",
             "trust_remote_code": True,
             "quantization_config": bnb_config
         }
 
-        # torch_dtype 설정이 있으면 적용 (예: bfloat16)
-        # 양자화가 없을 때 주로 사용됨
         if not bnb_config and hasattr(self.config, "torch_dtype"):
              model_kwargs["torch_dtype"] = getattr(torch, self.config.torch_dtype, torch.float16)
 
-        # 3. 모델 & 토크나이저 로드
         try:
             model = AutoModelForCausalLM.from_pretrained(
                 self.config.path, 
@@ -47,7 +48,6 @@ class HuggingFaceLoader:
                 self.config.path, 
                 trust_remote_code=True
             )
-            print(f"✅ [Loader] 로딩 완료!")
             return model, tokenizer
             
         except Exception as e:
