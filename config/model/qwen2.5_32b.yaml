@@ -11,6 +11,6 @@ quantization:
 # 생성 설정
 generation:
   max_new_tokens: 4096
-  temperature: 0.2
+  temperature: 0.0
   top_p: 0.9
   do_sample: true

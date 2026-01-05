@@ -12,13 +12,13 @@ class PromptResult(TypedDict):
     system_prompt: str
     user_prompt: str
 
-class SolverResult(TypedDict):
-    answer: str
-    reasoning: str
+# class SolverResult(TypedDict):
+#     answer: str
+#     reasoning: str
 
-class CriticResult(TypedDict):
-    critic_result: str
-    critic_reason: str
+# class CriticResult(TypedDict):
+#     critic_result: str
+#     critic_reason: str
 
 class EnsembleResult(TypedDict):
     final_answer: Optional[int]
@@ -28,6 +28,6 @@ class AgentState(TypedDict):
     track_info: RouterResult
     retrieval_results: List[RetrievalResult]
     solver_prompt: PromptResult
-    solver_results: List[SolverResult]
-    critic_results: List[CriticResult]
+    # solver_results: List[SolverResult]
+    # critic_results: List[CriticResult]
     final_answer: EnsembleResult
