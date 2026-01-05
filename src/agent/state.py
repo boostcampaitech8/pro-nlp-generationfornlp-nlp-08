@@ -2,7 +2,6 @@ from typing import TypedDict, List, Optional
 from src.data_loader.schema import Problem
 
 class RouterResult(TypedDict):
-    category: str
     is_rag_required: bool
 
 class RetrievalResult(TypedDict):

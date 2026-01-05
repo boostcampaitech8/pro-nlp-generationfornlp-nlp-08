@@ -1,14 +1,11 @@
 from typing import Dict
 from langsmith import traceable
-from src.agent.nodes.base import BaseLLMNode
 from src.agent.state import AgentState, RouterResult
-from src.utils.text import extract_json_from_text
 
 
-class RouterNode(BaseLLMNode):
+class RouterNode():
     """
-    문제 유형(category)과 RAG 필요 여부(is_rag_required)를 판별하는 Router 노드
-    cfg.prompt.router.system을 사용하여 LLM에 문제 유형 분류 요청
+    RAG 필요 여부(is_rag_required)를 판별하는 Router 노드
 
     Args:
         cfg: 설정 객체
@@ -18,22 +15,12 @@ class RouterNode(BaseLLMNode):
     """
 
     def __init__(self, cfg):
-        super().__init__(cfg, model_name="router")
-        self.system_prompt = cfg.prompt.router.system
-        self.user_template = cfg.prompt.router.user
+        pass
+        
 
     @traceable(name="RouterNode")
     def __call__(self, state: AgentState) -> Dict[str, RouterResult]:
-        raw_output = self.generate(
-            user_prompt = self.user_template,
-            system_prompt=self.system_prompt,
-            paragraph=state["problem"].paragraph,
-            question=state["problem"].question,
-            choices=", ".join(state["problem"].choices),
-        ).strip()
-        parsed = extract_json_from_text(raw_output)
         track_info_result = RouterResult(
-            category=parsed["category"],
-            is_rag_required=parsed["is_rag_required"],
+            is_rag_required= True if len(state["problem"].choices) == 4 else False, #선지가 4개인 문제는 RAG 필요
         )
         return {"track_info": track_info_result}
