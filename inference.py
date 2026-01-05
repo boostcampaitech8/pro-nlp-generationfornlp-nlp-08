@@ -11,6 +11,14 @@ import numpy as np
 import torch
 from tqdm import tqdm
 import pandas as pd
+import warnings
+import logging
+from transformers import logging as transformers_logging
+
+
+warnings.filterwarnings("ignore")
+logging.getLogger("transformers").setLevel(logging.ERROR)
+transformers_logging.set_verbosity_error()
 
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
@@ -42,7 +50,7 @@ def main(cfg: DictConfig):
             predicted_answer = extract_answer(result_state)
         except Exception as e:
             print(
-                f"❌ [Inference Error] id={data_id} | {type(e).__name__}: {e}"
+                f"[Inference Error] id={data_id} | {type(e).__name__}: {e}"
             )
             continue
 
