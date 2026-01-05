@@ -2,7 +2,8 @@ from langgraph.graph import StateGraph, END
 from .state import AgentState
 from .nodes import (
     router,
-    self_querying_retriever as retirever,
+    # self_querying_retriever as retriever,
+    retrieval,
     prompt,
     # solver,
     solver_no_tta as solver,
@@ -15,7 +16,7 @@ def build_graph(cfg):
     workflow = StateGraph(AgentState)
 
     workflow.add_node("router", router.RouterNode(cfg))
-    workflow.add_node("retriever", retirever.RetrievalNode(cfg))
+    workflow.add_node("retriever", retrieval.RetrievalNode(cfg))
     workflow.add_node("prompt_builder", prompt.PromptNode(cfg))
     workflow.add_node("solver", solver.SolverNode(cfg))
     # workflow.add_node("critic", critic.CriticNode(cfg))
