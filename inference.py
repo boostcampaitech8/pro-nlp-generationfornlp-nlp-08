@@ -14,11 +14,18 @@ import pandas as pd
 import warnings
 import logging
 from transformers import logging as transformers_logging
+from transformers.utils import logging as hf_logging
 
 
 warnings.filterwarnings("ignore")
 logging.getLogger("transformers").setLevel(logging.ERROR)
 transformers_logging.set_verbosity_error()
+logging.getLogger("accelerate.utils.modeling").setLevel(logging.ERROR)
+hf_logging.disable_progress_bar()
+logging.getLogger("ddgs").setLevel(logging.ERROR)    # DuckDuckGo 검색 로그
+logging.getLogger("primp").setLevel(logging.ERROR)   # 검색 라이브러리 로그
+logging.getLogger("httpx").setLevel(logging.ERROR)   # HTTP 요청 로그
+logging.getLogger("httpcore").setLevel(logging.ERROR)
 
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
