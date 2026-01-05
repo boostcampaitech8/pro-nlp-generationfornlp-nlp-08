@@ -1,13 +1,17 @@
 # @package model.router
-
 name: "router-llm"
 
-loader:
-  path: "Qwen/Qwen2.5-7B-Instruct"
-  model_kwargs:
-    device_map: "auto"
-    torch_dtype: "float16"
-    trust_remote_code: true
+path: "Qwen/Qwen2.5-7B-Instruct"
+
+# 모델 로딩 관련 kwargs
+model_kwargs:
+  device_map: "auto"
+  trust_remote_code: true
+
+  # torch dtype (양자화 없을 때 사용)
+  torch_dtype: "float16"
+
+  # tokenizer 설정
   tokenizer_kwargs:
     trust_remote_code: true
 
