@@ -18,8 +18,8 @@ def build_graph(cfg):
     workflow.add_node("retriever", retirever.RetrievalNode(cfg))
     workflow.add_node("prompt_builder", prompt.PromptNode(cfg))
     workflow.add_node("solver", solver.SolverNode(cfg))
-    workflow.add_node("critic", critic.CriticNode(cfg))
-    workflow.add_node("ensemble", ensemble.EnsembleNode(cfg))
+    # workflow.add_node("critic", critic.CriticNode(cfg))
+    # workflow.add_node("ensemble", ensemble.EnsembleNode(cfg))
 
     workflow.set_entry_point("router")
 
@@ -38,8 +38,9 @@ def build_graph(cfg):
 
     workflow.add_edge("retriever", "prompt_builder")
     workflow.add_edge("prompt_builder", "solver")
-    workflow.add_edge("solver", "critic")
-    workflow.add_edge("critic", "ensemble")
-    workflow.add_edge("ensemble", END)
+    workflow.add_edge("solver", END)
+    # workflow.add_edge("solver", "critic")
+    # workflow.add_edge("critic", "ensemble")
+    # workflow.add_edge("ensemble", END)
 
     return workflow.compile()
