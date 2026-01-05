@@ -28,7 +28,7 @@ class PromptNode:
 
             user_prompt = user_prompt_template.format(
                 context=context_str,
-                pragraph = state["problem"].paragraph,
+                paragraph = state["problem"].paragraph,
                 question=state["problem"].question,
                 choices=", ".join(
                     [f"{i+1}. {c}" for i, c in enumerate(state["problem"].choices)]

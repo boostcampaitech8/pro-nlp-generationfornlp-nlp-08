@@ -16,5 +16,5 @@ system:
   project_name: "CSAT-Solver-Agent"
 
 debug:
-  test_indices: [14, 22, 99, 105]
+  test_indices: [53, 54, 56, 70]
   verbose: false
