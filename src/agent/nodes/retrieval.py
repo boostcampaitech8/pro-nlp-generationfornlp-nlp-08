@@ -4,10 +4,9 @@ from typing import Dict, Any, List, cast
 from FlagEmbedding import BGEM3FlagModel
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
-
 from omegaconf import DictConfig
-
 from src.agent.state import AgentState, RetrievalResult
+from langsmith import traceable
 
 
 class RetrievalNode:
@@ -40,6 +39,7 @@ class RetrievalNode:
 
         return dense_vec, sparse_vec
 
+    @traceable(name="RetrievalNode")
     def __call__(self, state: AgentState) -> Dict[str, List[RetrievalResult]]:
 
         problem = state["problem"]
