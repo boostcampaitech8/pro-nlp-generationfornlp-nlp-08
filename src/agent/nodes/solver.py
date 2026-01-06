@@ -18,7 +18,11 @@ class SolverNode(BaseLLMNode):
     - Index Remapping을 통해 섞인 선지에서 고른 답을 원본 번호로 변환합니다.
     """
 
+<<<<<<< HEAD
     NUM_TTA_VERSIONS = 3  # TTA 버전 수
+=======
+    NUM_TTA_VERSIONS = 1  # TTA 버전 수
+>>>>>>> fc95ce6 ([Exp] CoT 데이터 셋으로 모델 SFT한 테스트 결과(#52) (#63))
 
     def __init__(self, config):
         super().__init__(config, model_name="main_solver")
@@ -34,12 +38,21 @@ class SolverNode(BaseLLMNode):
             "enable_thinking", False
         )
 
+<<<<<<< HEAD
     @traceable(name="SolverNode")
     def __call__(self, state: AgentState) -> Dict[str, List[SolverResult]]:
+=======
+    def __call__(self, state: dict) -> dict:
+        # 1. State에서 필요한 정보 추출
+        paragraph = state.get("paragraph", "")
+        question = state.get("question", "")
+        choices = state.get("choices", [])
+>>>>>>> fc95ce6 ([Exp] CoT 데이터 셋으로 모델 SFT한 테스트 결과(#52) (#63))
 
         track_info = state.get("track_info", {})
         is_rag_required = track_info.get("is_rag_required", False)
 
+<<<<<<< HEAD
         context_str = ""
         track = ""
         if is_rag_required:
@@ -53,6 +66,14 @@ class SolverNode(BaseLLMNode):
         solver_results = []
 
         for shuffled_choices, original_indices in tta_versions:
+=======
+        # 2. TTA: 5가지 선지 순서 변형 생성
+        tta_versions = self._generate_tta_versions(choices)
+        solver_results = []
+
+        # 3. 각 버전에 대해 추론 수행
+        for version_idx, (shuffled_choices, original_indices) in enumerate(tta_versions):
+>>>>>>> fc95ce6 ([Exp] CoT 데이터 셋으로 모델 SFT한 테스트 결과(#52) (#63))
 
             choices_str = self._format_choices(shuffled_choices)
 
@@ -73,9 +94,16 @@ class SolverNode(BaseLLMNode):
 
             parsed_result = self._parse_and_remap(raw_output, original_indices)
 
+<<<<<<< HEAD
             parsed_result["raw_choice"] = choices_str
 
             solver_results.append(parsed_result)
+=======
+            solver_results.append({
+                "reasoning": reasoning,
+                "answer": original_answer,
+            })
+>>>>>>> fc95ce6 ([Exp] CoT 데이터 셋으로 모델 SFT한 테스트 결과(#52) (#63))
 
         return {"solver_results": solver_results}
 
@@ -121,23 +149,42 @@ class SolverNode(BaseLLMNode):
         )
 
 
-    def _parse_and_remap(
-        self, raw_output: str, original_indices: List[int]
-    ) -> Dict[str, Any]:
-        """결과 파싱 및 인덱스 복원 전담"""
-        try:
-            data = extract_json_from_text(raw_output)
-            shuffled_idx = int(data.get("answer", 0))
+        예상 형식: {"reasoning": "...", "answer": 3}
+        """
+        # 1. <think> 태그 제거
+        clean_output = re.sub(r'<think>.*?</think>', '', raw_output, flags=re.DOTALL).strip()
+        parsed_answer = None
+        parsed_reasoning = ""
 
-            if 1 <= shuffled_idx <= len(original_indices):
-                original_answer = original_indices[shuffled_idx - 1]
-            else:
-                original_answer = 0
+        # 2. JSON 파싱 시도 (가장 바깥쪽 중괄호 탐색)
+        start_idx = clean_output.find('{')
+        end_idx = clean_output.rfind('}')
+        
+        if start_idx != -1 and end_idx != -1:
+            json_str = clean_output[start_idx : end_idx + 1]
+            result = json.loads(json_str)
+            
+            val = result.get("answer")
+            if val is not None:
+                parsed_answer = int(val)
+            parsed_reasoning = result.get("reasoning", "")
+            
+        if parsed_answer is None:
+            print(f"parsing error:\n{raw_output[:500]}")
+            parsed_answer = -1 
+        return parsed_reasoning, parsed_answer
 
-            return {
-                "reasoning": data.get("think", data.get("reasoning", "")).strip(),
-                "answer": original_answer,
-                "raw_answer": shuffled_idx,
-            }
-        except Exception:
-            return {"reasoning": "Parsing failed", "answer": 0}
+    def _remap_index(self, shuffled_answer: int, original_indices: List[int]) -> int:
+        """
+        섞인 선지에서 선택한 답을 원본 문제의 번호로 변환합니다.
+
+        Args:
+            shuffled_answer: 섞인 선지에서 선택한 번호 (1-indexed)
+            original_indices: 섞인 순서의 원본 인덱스 리스트
+                예: [3, 1, 4, 2, 5] → 셔플된 1번 = 원본 3번
+
+        Returns:
+            원본 문제에서의 정답 번호
+        """
+        shuffled_answer = int(shuffled_answer)
+        return original_indices[shuffled_answer - 1]
