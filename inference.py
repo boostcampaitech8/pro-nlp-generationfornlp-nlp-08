@@ -55,14 +55,14 @@ def main(cfg: DictConfig):
         try:
             result_state = app.invoke(cast(AgentState, {"problem": data}))
             predicted_answer = extract_answer(result_state)
+            output_df.loc[data_id] = {"id": data_id, "answer": predicted_answer}
+            output_df.to_csv(output_path, index=False)
         except Exception as e:
             print(
                 f"[Inference Error] id={data_id} | {type(e).__name__}: {e}"
             )
             continue
 
-        output_df.loc[data_id] = {"id": data_id, "answer": predicted_answer}
-        output_df.to_csv(output_path, index=False)
 
 
 def set_seed(seed: int) -> None:
