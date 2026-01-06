@@ -1,3 +1,5 @@
+seed: 42
+
 defaults:
   - _self_
   - path: default
@@ -8,7 +10,12 @@ defaults:
   - model/qwen2.5_32b@model.sub_solver
   - model/qwen3_32b@model.main_solver
   - model/qwen2.5_7b_it@model.router
+  - model/bge_m3@model.bge_m3
 system:
   device: "cuda"
   seed: 42
   project_name: "CSAT-Solver-Agent"
+
+debug:
+  test_indices: [53, 54, 56, 70]
+  verbose: false

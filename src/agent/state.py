@@ -1,20 +1,33 @@
-from typing import TypedDict, List, Dict, Any, Optional
+from typing import TypedDict, List, Optional
+from src.data_loader.schema import Problem
+
+class RouterResult(TypedDict):
+    is_rag_required: bool
+
+class RetrievalResult(TypedDict):
+    title: str
+    body: str
+
+class PromptResult(TypedDict):
+    system_prompt: str
+    user_prompt: str
+
+# class SolverResult(TypedDict):
+#     answer: str
+#     reasoning: str
+
+# class CriticResult(TypedDict):
+#     critic_result: str
+#     critic_reason: str
+
+class EnsembleResult(TypedDict):
+    final_answer: Optional[int]
 
 class AgentState(TypedDict):
-    # --- 입력 데이터 ---
-    paragraph: str
-    problem: Dict[str, Any]  # question, choices
-
-    # --- 처리 데이터 ---
-    track_info: Dict[str, Any]       # category, is_rag_required
-    retrieved_context: List[str]     # RAG 검색 결과
-    
-    # Solver에게 던져질 완성된 프롬프트
-    final_prompt_messages: List[Any] 
-    solver_results: List[Dict[Any, str]] # 10개 답안{"answer", "reasoning"}
-    
-    # --- critic 결과 데이터 ---
-    critic_results: List[Dict[str, str]] # 10개 답안의 critic 결과{"critic_result", "critic_reason"}
-
-    # --- 최종 결과 ---
-    final_answer: Optional[int]
+    problem: Problem
+    track_info: RouterResult
+    retrieval_results: List[RetrievalResult]
+    solver_prompt: PromptResult
+    # solver_results: List[SolverResult]
+    # critic_results: List[CriticResult]
+    final_answer: EnsembleResult
