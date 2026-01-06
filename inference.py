@@ -41,8 +41,8 @@ def main(cfg: DictConfig):
 
     output_df = prepare_output_file(dataset, output_path)
 
-    # answer==0 인 데이터만 남기고 미리 필터링
-    pending_ids = set(output_df.index[output_df["answer"] == 0])
+    # answer==0 인 데이터만 남기고 미리 필터링 (id 기준)
+    pending_ids = set(output_df.loc[output_df["answer"] == 0, "id"].astype(str))
     dataset = [data for data in dataset if str(data.id) in pending_ids]
 
     if not dataset:
