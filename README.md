@@ -34,12 +34,20 @@
 |<b>오수빈||[@OhSuBin13](https://github.com/OhSuBin13)|
 
 ## ⚙ 시스템 구조
-> 본 시스템은 수능형 문제를 해결하기 위해 설계된 Multi-Agent AI 시스템입니다. 
+> 본 시스템은 수능형 문제를 해결하기 위해 설계된  Langgraph 기반 Multi-Agent AI 시스템입니다. 
 <br>
+
+<img width="480" height="1069" alt="Image" src="https://github.com/user-attachments/assets/999f089a-1c97-4437-ae1b-37fbd1a284b2" />
+
+1️⃣문제가 입력되면 `Router모듈`로 전달되어 문제 유형(Track A/Track B)을 분류합니다.
+- Track A: <b>RAG가 필요없는</b> 단순한 지문 독해 문제(국어/비문학)
+- Track B: <b>RAG가 필요한</b> 지식 기반 문제(역사/정치/사회 등)
+
+2️⃣ `Prompt Builder모듈` `solver모듈`에 전달하기 위한 프롬프트를 구성
 
 
 ## 📁 프로젝트 구조
-<img width="480" height="1069" alt="Image" src="https://github.com/user-attachments/assets/999f089a-1c97-4437-ae1b-37fbd1a284b2" />
+
 
 
 
