@@ -21,23 +21,24 @@ class HuggingFaceLoader:
         free_gpu_memory()
 
         # 양자화 설정
-        bnb_config = None
-        if "quantization" in self.config and self.config.quantization:
-            q_params = dict(self.config.quantization)
+        # bnb_config = None
+        # if "quantization" in self.config and self.config.quantization:
+        #     q_params = dict(self.config.quantization)
             
-            if q_params.get("bnb_4bit_compute_dtype") == "bfloat16":
-                q_params["bnb_4bit_compute_dtype"] = torch.bfloat16
+        #     if q_params.get("bnb_4bit_compute_dtype") == "bfloat16":
+        #         q_params["bnb_4bit_compute_dtype"] = torch.bfloat16
             
-            bnb_config = BitsAndBytesConfig(**q_params)
+        #     bnb_config = BitsAndBytesConfig(**q_params)
 
         model_kwargs = {
             "device_map": "auto",
-            "trust_remote_code": True,
-            "quantization_config": bnb_config
+            "torch_dtype": "auto",
+            # "trust_remote_code": True,
+            # "quantization_config": bnb_config
         }
 
-        if not bnb_config and hasattr(self.config, "torch_dtype"):
-             model_kwargs["torch_dtype"] = getattr(torch, self.config.torch_dtype, torch.float16)
+        # if not bnb_config and hasattr(self.config, "torch_dtype"):
+        #      model_kwargs["torch_dtype"] = getattr(torch, self.config.torch_dtype, torch.float16)
 
         try:
             model = AutoModelForCausalLM.from_pretrained(
@@ -46,7 +47,7 @@ class HuggingFaceLoader:
             )
             tokenizer = AutoTokenizer.from_pretrained(
                 self.config.path, 
-                trust_remote_code=True
+                # trust_remote_code=True
             )
             return model, tokenizer
             
