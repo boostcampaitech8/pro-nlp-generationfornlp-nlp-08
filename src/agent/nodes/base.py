@@ -32,7 +32,7 @@ class BaseLLMNode:
         self.verbose = cfg.debug.get("verbose", False)
         self.model_factory = ModelFactory(cfg.model)
         self.model_name = model_name
-        self.gen_params = cfg.model[model_name].get("generation_params", {})
+        self.gen_params = cfg.model[model_name].get("generation", {})
 
     @traceable(name="BaseLLMNode.generate")
     def generate(
@@ -79,7 +79,7 @@ class BaseLLMNode:
                 messages,
                 tokenize=False,
                 add_generation_prompt=True,
-                enable_thinking=enable_thinking
+                # enable_thinking=enable_thinking
             )
 
             # if enable_thinking:
