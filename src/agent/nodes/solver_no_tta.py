@@ -21,7 +21,7 @@ class SolverNode(BaseLLMNode):
         raw_output = self.generate(
             user_prompt=state["solver_prompt"]["user_prompt"],
             system_prompt=state["solver_prompt"]["system_prompt"],
-            enable_thinking=True,
+            enable_thinking=self.enable_thinking,
         )
 
         output: Dict[str, Any] = extract_json_from_text(raw_output)
