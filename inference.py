@@ -22,9 +22,9 @@ logging.getLogger("transformers").setLevel(logging.ERROR)
 transformers_logging.set_verbosity_error()
 logging.getLogger("accelerate.utils.modeling").setLevel(logging.ERROR)
 hf_logging.disable_progress_bar()
-logging.getLogger("ddgs").setLevel(logging.ERROR)    # DuckDuckGo 검색 로그
-logging.getLogger("primp").setLevel(logging.ERROR)   # 검색 라이브러리 로그
-logging.getLogger("httpx").setLevel(logging.ERROR)   # HTTP 요청 로그
+logging.getLogger("ddgs").setLevel(logging.ERROR)  # DuckDuckGo 검색 로그
+logging.getLogger("primp").setLevel(logging.ERROR)  # 검색 라이브러리 로그
+logging.getLogger("httpx").setLevel(logging.ERROR)  # HTTP 요청 로그
 logging.getLogger("httpcore").setLevel(logging.ERROR)
 
 
@@ -41,28 +41,28 @@ def main(cfg: DictConfig):
 
     output_df = prepare_output_file(dataset, output_path)
 
+    # answer==0 인 데이터만 남기고 미리 필터링
+    pending_ids = set(output_df.index[output_df["answer"] == 0])
+    dataset = [data for data in dataset if str(data.id) in pending_ids]
+
+    if not dataset:
+        print("[Inference] answer==0 인 데이터가 없습니다. 종료합니다.")
+        return
+
     for data in tqdm(dataset):
         data_id = str(data.id)
-        current_answer = (
-            output_df.at[data_id, "answer"]
-            if data_id in output_df.index
-            else 0
-        )
-
-        if current_answer != 0:
-            continue
 
         try:
             result_state = app.invoke(cast(AgentState, {"problem": data}))
             predicted_answer = extract_answer(result_state)
-            output_df.loc[data_id] = {"id": data_id, "answer": predicted_answer}
+            output_df.loc[data_id] = {
+                "id": data_id,
+                "answer": predicted_answer,
+            }
             output_df.to_csv(output_path, index=False)
         except Exception as e:
-            print(
-                f"[Inference Error] id={data_id} | {type(e).__name__}: {e}"
-            )
+            print(f"[Inference Error] id={data_id} | {type(e).__name__}: {e}")
             continue
-
 
 
 def set_seed(seed: int) -> None:
