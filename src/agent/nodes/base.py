@@ -3,7 +3,6 @@ from omegaconf import DictConfig
 from src.model.factory import ModelFactory
 from transformers import TextStreamer
 from langsmith import traceable
-from src.utils.memory import free_gpu_memory
 import gc
 
 
@@ -79,7 +78,7 @@ class BaseLLMNode:
                 messages,
                 tokenize=False,
                 add_generation_prompt=True,
-                # enable_thinking=enable_thinking
+                enable_thinking=enable_thinking
             )
 
             # if enable_thinking:
