@@ -1,23 +1,31 @@
-import re
 import json
-from typing import Dict
+from typing import Dict, Any
 from langsmith import traceable
 
-@traceable(name="extract_json_from_text")
-def extract_json_from_text(text: str) -> Dict:
+@traceable(name="extract_last_json")
+def extract_json_from_text(text: str) -> Dict[str, Any]:
     """
-    Args:
-        text (str): JSON 객체를 포함하는 문자열
-
-    Returns:
-        Dict: 추출된 JSON 객체
-
-    Raises:
-        ValueError: 문자열에서 JSON 객체를 찾지 못한 경우
+    텍스트 내에서 '가장 마지막에 위치한' 유효한 JSON 객체를 찾아 반환합니다.
     """
-    match = re.search(r'\{.*\}', text, re.DOTALL)
-    if not match:
-        raise ValueError(f"JSON object not found in output: {text}")
-
-    json_str = match.group(0)
-    return json.loads(json_str)
+    stack = 0
+    end_index = -1
+    
+    for i in range(len(text) - 1, -1, -1):
+        char = text[i]
+        
+        if char == '}':
+            if stack == 0:
+                end_index = i
+            stack += 1
+        
+        elif char == '{':
+            if stack > 0:
+                stack -= 1
+                if stack == 0:
+                    json_str = text[i : end_index + 1]
+                    try:
+                        return json.loads(json_str)
+                    except json.JSONDecodeError:
+                        continue
+    
+    raise ValueError(f"JSON object not found in output: {text}")
