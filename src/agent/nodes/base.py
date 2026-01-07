@@ -3,7 +3,6 @@ from omegaconf import DictConfig
 from src.model.factory import ModelFactory
 from transformers import TextStreamer
 from langsmith import traceable
-from src.utils.memory import free_gpu_memory
 import gc
 
 
@@ -32,7 +31,7 @@ class BaseLLMNode:
         self.verbose = cfg.debug.get("verbose", False)
         self.model_factory = ModelFactory(cfg.model)
         self.model_name = model_name
-        self.gen_params = cfg.model[model_name].get("generation_params", {})
+        self.gen_params = cfg.model[model_name].get("generation", {})
 
     @traceable(name="BaseLLMNode.generate")
     def generate(

@@ -1,14 +1,17 @@
 import os
 import torch
-from typing import Dict, Any, List
+from typing import Dict, Any, List, cast
 from FlagEmbedding import BGEM3FlagModel
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
+from omegaconf import DictConfig
+from src.agent.state import AgentState, RetrievalResult
+from langsmith import traceable
 
 
 class RetrievalNode:
 
-    def __init__(self, cfg: Dict[str, Any]):
+    def __init__(self, cfg: DictConfig):
         self.cfg = cfg
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -22,24 +25,25 @@ class RetrievalNode:
         self.collection_name = "wiki_collection"
 
     def get_hybrid_embeddings(self, text: str):
-        output = self.model.encode(
-            [text],
-            return_dense=self.cfg.model.bge_m3.encode_kwargs.return_dense,
-            return_sparse=self.cfg.model.bge_m3.encode_kwargs.return_sparse,
+        output: Dict[str, Any] = cast(
+            Dict[str, Any],
+            self.model.encode(
+                [text],
+                return_dense=self.cfg.model.bge_m3.encode_kwargs.return_dense,
+                return_sparse=self.cfg.model.bge_m3.encode_kwargs.return_sparse,
+            ),
         )
-        dense_vec = output["dense_vecs"][0].tolist()
-        sparse_vec = output["lexical_weights"][0]
+
+        dense_vec = cast(Any, output["dense_vecs"][0]).tolist()
+        sparse_vec = cast(Dict[str, float], output["lexical_weights"][0])
 
         return dense_vec, sparse_vec
 
-    def __call__(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    @traceable(name="RetrievalNode")
+    def __call__(self, state: AgentState) -> Dict[str, List[RetrievalResult]]:
 
-        paragraph = state.get("paragraph", "")
-        problem = state.get("problem", {})
-        question = problem.get("question", "")
-        choices = problem.get("choices", [])
-
-        query_text = f"{paragraph} {question} {' '.join(choices)}"
+        problem = state["problem"]
+        query_text = f"{problem.paragraph} {problem.question} {' '.join(problem.choices)}"
 
         dense_vec, sparse_vec = self.get_hybrid_embeddings(query_text)
 
@@ -64,8 +68,16 @@ class RetrievalNode:
             limit=self.cfg.model.bge_m3.retriever.top_k,
         )
 
-        retrieved_context = [
-            hit.payload.get("text", "") for hit in search_result.points
-        ]
+        retrieval_results: List[RetrievalResult] = []
+        for hit in search_result.points:
+            payload = hit.payload or {}
+            title = payload.get("title", "")
+            body = (
+                payload.get("body")
+                or payload.get("text")
+                or payload.get("content")
+                or ""
+            )
+            retrieval_results.append(RetrievalResult(title=title, body=body))
 
-        return {"retrieved_context": retrieved_context}
+        return {"retrieval_results": retrieval_results}
