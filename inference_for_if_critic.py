@@ -21,6 +21,7 @@ import logging
 from transformers import logging as transformers_logging
 from transformers.utils import logging as hf_logging
 import pickle
+from sklearn.metrics import f1_score, accuracy_score
 
 
 warnings.filterwarnings("ignore")
@@ -57,7 +58,6 @@ def main(cfg: DictConfig):
 
     for data in tqdm(problem_result):
         data_id = str(data["problem"].id)
-
         try:
             result_state_with_critic = app_with_critic.invoke(data)
             result_state_without_critic = app_without_critic.invoke(data)
@@ -65,6 +65,7 @@ def main(cfg: DictConfig):
                 df_results,
                 pd.DataFrame([{
                     "id": data_id,
+                    "true_answer": data["problem"].answer + 1,
                     "answer_with_critic": result_state_with_critic["final_answer"]["final_answer"],
                     "answer_without_critic": result_state_without_critic["final_answer"]["final_answer"],
                 }])
@@ -73,6 +74,13 @@ def main(cfg: DictConfig):
         except Exception as e:
             print(f"[Inference Error] id={data_id} | {type(e).__name__}: {e}")
             continue
+    
+    df_results = pd.read_csv(output_path)
+    print("Final Results:")
+    print("With Critic Accuracy:", accuracy_score(df_results["true_answer"], df_results["answer_with_critic"]))
+    print("Without Critic Accuracy:", accuracy_score(df_results["true_answer"], df_results["answer_without_critic"]))
+    print("With Critic F1 Score:", f1_score(df_results["true_answer"], df_results["answer_with_critic"], average='macro'))
+    print("Without Critic F1 Score:", f1_score(df_results["true_answer"], df_results["answer_without_critic"], average='macro'))
 
 
 def set_seed(seed: int) -> None:
@@ -140,15 +148,6 @@ def build_graph_without_critic(cfg):
     workflow.add_edge("ensemble", END)
 
     return workflow.compile()
-
-
-
-
-
-
-
-
-
 
 if __name__ == "__main__":
     main()
