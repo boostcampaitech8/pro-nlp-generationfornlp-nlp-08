@@ -19,7 +19,7 @@ load_dotenv()
 def main(cfg: DictConfig):
     set_seed(cfg.seed)
     app = build_graph(cfg)
-    dataset = load_dataset(cfg.path.data.validate)
+    dataset = load_dataset(cfg.path.data.validation)
     for i in cfg.debug.test_indices:
         print(f"--- Test Index: {i} ---")
         data = dataset[i]

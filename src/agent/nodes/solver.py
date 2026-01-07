@@ -41,9 +41,9 @@ class SolverNode(BaseLLMNode):
         is_rag_required = track_info.get("is_rag_required", False)
         track = "track_b" if is_rag_required else "track_a"
 
-        retrieved_context = state.get("retrieved_context", [])
-        context = "\n".join(retrieved_context) if retrieved_context else ""
-
+        context_str = ""
+        for i, document in enumerate(state["retrieval_results"]):
+            context_str += f"[context_{i+1}: {document['title']}]\n{document['body']}\n\n"
         tta_versions = self._generate_tta_versions(state["problem"].choices)
         solver_results = []
 
@@ -57,7 +57,7 @@ class SolverNode(BaseLLMNode):
                 "choices": choices_str,
             }
             if track == "track_b":
-                input_kwargs["context"] = context
+                input_kwargs["context"] = context_str
 
             raw_output = self.generate(
                 user_prompt=self.user_prompt_template[track],

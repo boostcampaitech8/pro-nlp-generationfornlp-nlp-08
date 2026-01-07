@@ -128,6 +128,7 @@ class BaseLLMNode:
         system_prompts: List[str],
         enable_thinking: bool = False,
         kwargs: List[dict] = [],
+        batch_size: int = 2,
     ) -> List[str]:
         """
         LLM에게 배치 프롬프트를 입력하고, 생성된 텍스트(답변)를 반환하는 함수
@@ -141,7 +142,11 @@ class BaseLLMNode:
             list: 모델이 생성한 순수 텍스트 답변 리스트 (특수 토큰 제외)
         """
         model, tokenizer = self.model_factory.get_model(self.model_name)
-        user_prompts = []
+        tokenizer.padding_side = "left"
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+
+        formatted_user_prompts = []
         for user_prompt_template, kw in zip(user_prompt_templates, kwargs):
             if kw:
                 try:
@@ -152,47 +157,51 @@ class BaseLLMNode:
                     )
             else:
                 formatted_content = user_prompt_template
-            user_prompts.append(formatted_content)
-        tokenizer.padding_side = "left"
-        if tokenizer.pad_token is None:
-            tokenizer.pad_token = tokenizer.eos_token
+            formatted_user_prompts.append(formatted_content)
+        
 
-        texts = []
+        decoded_outputs = []
+
         try:
-            for user_prompt, system_prompt in zip(
-                user_prompts, system_prompts
-            ):
+            for i in range(0, len(formatted_user_prompts), batch_size):
+                batch_user_prompts = formatted_user_prompts[i : i + batch_size]
+                batch_system_prompts = system_prompts[i : i + batch_size]
 
-                messages = []
-                if system_prompt:
-                    messages.append(
-                        {"role": "system", "content": system_prompt}
+                texts = [] 
+                for user_prompt, system_prompt in zip(
+                    batch_user_prompts, batch_system_prompts
+                ):
+
+                    messages = []
+                    if system_prompt:
+                        messages.append(
+                            {"role": "system", "content": system_prompt}
+                        )
+                    messages.append({"role": "user", "content": user_prompt})
+                    text = tokenizer.apply_chat_template(
+                        messages,
+                        tokenize=False,
+                        add_generation_prompt=True,
+                        enable_thinking=enable_thinking,
                     )
-                messages.append({"role": "user", "content": user_prompt})
-                text = tokenizer.apply_chat_template(
-                    messages,
-                    tokenize=False,
-                    add_generation_prompt=True,
-                    enable_thinking=enable_thinking,
-                )
-                texts.append(text)
+                    texts.append(text)
 
-            inputs = tokenizer(texts, return_tensors="pt", padding=True).to(
-                model.device
-            )
-            with torch.no_grad():
-                outputs = model.generate(
-                    **inputs,
-                    **self.gen_params,
+                inputs = tokenizer(texts, return_tensors="pt", padding=True).to(
+                    model.device
                 )
-            input_len = inputs["input_ids"].shape[1]
+                with torch.no_grad():
+                    outputs = model.generate(
+                        **inputs,
+                        **self.gen_params,
+                    )
+                input_len = inputs["input_ids"].shape[1]
+                for output in outputs:
+                    generated_tokens = output[input_len:]
+                    decoded_output = tokenizer.decode(
+                        generated_tokens, skip_special_tokens=True
+                    )
+                    decoded_outputs.append(decoded_output)
 
-            decoded_outputs = [
-                tokenizer.decode(
-                    output[input_len:], skip_special_tokens=True
-                ).strip()
-                for output in outputs
-            ]
         except Exception as e:
             print(f"❌ [LLM Generation Error] {e}")
             raise e

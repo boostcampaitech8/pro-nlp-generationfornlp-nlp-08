@@ -1,4 +1,3 @@
-# src/agent/nodes/solver.py
 import json
 import re
 import random
@@ -18,7 +17,7 @@ class SolverNode(BaseLLMNode):
     - Index Remapping을 통해 섞인 선지에서 고른 답을 원본 번호로 변환합니다.
     """
 
-    NUM_TTA_VERSIONS = 3  # TTA 버전 수
+    NUM_TTA_VERSIONS = 2  # TTA 버전 수
 
     def __init__(self, config):
         super().__init__(config, model_name="main_solver")
@@ -41,9 +40,9 @@ class SolverNode(BaseLLMNode):
         is_rag_required = track_info.get("is_rag_required", False)
         track = "track_b" if is_rag_required else "track_a"
 
-        retrieved_context = state.get("retrieved_context", [])
-        context = "\n".join(retrieved_context) if retrieved_context else ""
-
+        context_str = ""
+        for i, document in enumerate(state["retrieval_results"]):
+            context_str += f"[context_{i+1}: {document['title']}]\n{document['body']}\n\n"
         tta_versions = self._generate_tta_versions(state["problem"].choices)
 
         inputs = {
@@ -63,7 +62,7 @@ class SolverNode(BaseLLMNode):
                 "choices": choices_str,
             }
             if track == "track_b":
-                kwargs["context"] = context
+                kwargs["context"] = context_str
             inputs["kwargs"].append(kwargs)
             original_indices_list.append(original_indices)
         
