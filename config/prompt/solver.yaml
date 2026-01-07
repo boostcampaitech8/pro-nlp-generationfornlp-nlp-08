@@ -45,4 +45,4 @@ track_b:
     [선지]: {choices}
 
 strategy:
-  enable_thinking: false
+  enable_thinking: true
