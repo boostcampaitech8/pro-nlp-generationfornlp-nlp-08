@@ -38,8 +38,8 @@ class CriticNode(BaseLLMNode):
                 system_prompt=self.system_prompt,
                 paragraph=state["problem"].paragraph,
                 question=state["problem"].question,
-                choices=choices_str,
-                predicted_answer=solver_result["answer"],
+                choices= solver_result["raw_choice"],
+                predicted_answer=solver_result["raw_answer"],
                 reasoning=solver_result["reasoning"],
             )
 

@@ -68,6 +68,8 @@ class SolverNode(BaseLLMNode):
 
             parsed_result = self._parse_and_remap(raw_output, original_indices)
 
+            parsed_result["raw_choice"] = choices_str
+
             solver_results.append(parsed_result)
 
         return {"solver_results": solver_results}
@@ -103,7 +105,6 @@ class SolverNode(BaseLLMNode):
 
             # 섞인 순서대로 선지 재배열
             shuffled_choices = [choices[i - 1] for i in shuffled_indices]
-
             versions.append((shuffled_choices, shuffled_indices))
 
         return versions
@@ -131,6 +132,7 @@ class SolverNode(BaseLLMNode):
             return {
                 "reasoning": data.get("think", data.get("reasoning", "")).strip(),
                 "answer": original_answer,
+                "raw_answer": shuffled_idx,
             }
         except Exception:
             return {"reasoning": "Parsing failed", "answer": 0}

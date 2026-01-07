@@ -15,8 +15,8 @@ def extract_json_from_text(text: str) -> Dict[str, Any]:
     result = {}
     if delimiter in text:
         parts = text.split(delimiter, 1)
-        result["think"] = parts[0]
-        text = parts[1].replace("<think>", "")
+        result["think"] = parts[0].replace("<think>", "")
+        text = parts[1]
 
     for i in range(len(text) - 1, -1, -1):
         char = text[i]
