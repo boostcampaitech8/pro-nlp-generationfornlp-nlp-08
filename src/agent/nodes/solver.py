@@ -2,8 +2,11 @@
 import json
 import re
 import random
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
 from .base import BaseLLMNode
+from src.agent.state import AgentState, SolverResult
+from src.utils.text import extract_json_from_text
+from langsmith import traceable
 
 
 class SolverNode(BaseLLMNode):
@@ -15,60 +18,63 @@ class SolverNode(BaseLLMNode):
     - Index Remapping을 통해 섞인 선지에서 고른 답을 원본 번호로 변환합니다.
     """
 
-    NUM_TTA_VERSIONS = 1  # TTA 버전 수
+    NUM_TTA_VERSIONS = 3  # TTA 버전 수
 
     def __init__(self, config):
         super().__init__(config, model_name="main_solver")
+        self.system_prompt = {
+            "track_a": config.prompt.solver.track_a.system,
+            "track_b": config.prompt.solver.track_b.system,
+        }
+        self.user_prompt_template = {
+            "track_a": config.prompt.solver.track_a.user,
+            "track_b": config.prompt.solver.track_b.user,
+        }
+        self.enable_thinking = config.prompt.solver.strategy.get(
+            "enable_thinking", False
+        )
 
-    def __call__(self, state: dict) -> dict:
-        # 1. State에서 필요한 정보 추출
-        paragraph = state.get("paragraph", "")
-        question = state.get("question", "")
-        choices = state.get("choices", [])
+    @traceable(name="SolverNode")
+    def __call__(self, state: AgentState) -> Dict[str, List[SolverResult]]:
 
-        # Track 정보와 RAG 컨텍스트 가져오기
         track_info = state.get("track_info", {})
         is_rag_required = track_info.get("is_rag_required", False)
         track = "track_b" if is_rag_required else "track_a"
-        
+
         retrieved_context = state.get("retrieved_context", [])
         context = "\n".join(retrieved_context) if retrieved_context else ""
 
-        # 2. TTA: 5가지 선지 순서 변형 생성
-        tta_versions = self._generate_tta_versions(choices)
+        tta_versions = self._generate_tta_versions(state["problem"].choices)
         solver_results = []
 
-        # 3. 각 버전에 대해 추론 수행
-        for version_idx, (shuffled_choices, original_indices) in enumerate(tta_versions):
+        for shuffled_choices, original_indices in tta_versions:
 
-            choices_str = self._format_choices(shuffled_choices) # 선지 문자열 생성
-            template = self.templates.get(track, self.templates["track_a"]) # 적절한 템플릿 선택 및 프롬프트 생성
+            choices_str = self._format_choices(shuffled_choices)
 
-            # 입력 변수 동적 구성
             input_kwargs = {
-                "category": track_info.get("category", "others"),
-                "paragraph": paragraph,
-                "question": question,
-                "choices": choices_str
+                "paragraph": state["problem"].paragraph,
+                "question": state["problem"].question,
+                "choices": choices_str,
             }
             if track == "track_b":
                 input_kwargs["context"] = context
 
-            # LLM 호출
-            raw_output = self.generate(template, **input_kwargs)
+            raw_output = self.generate(
+                user_prompt=self.user_prompt_template[track],
+                system_prompt=self.system_prompt[track],
+                enable_thinking=self.enable_thinking,
+                **input_kwargs, #type: ignore
+            )
 
-            # 4. 답안 파싱 및 Index Remapping
-            reasoning, shuffled_answer = self._parse_answer(raw_output)
-            original_answer = self._remap_index(shuffled_answer, original_indices)
+            parsed_result = self._parse_and_remap(raw_output, original_indices)
 
-            solver_results.append({
-                "reasoning": reasoning,
-                "answer": original_answer,
-            })
+            solver_results.append(parsed_result)
 
         return {"solver_results": solver_results}
 
-    def _generate_tta_versions(self, choices: List[str]) -> List[Tuple[List[str], List[int]]]:
+    def _generate_tta_versions(
+        self, choices: List[str]
+    ) -> List[Tuple[List[str], List[int]]]:
         """
         선지의 순서를 무작위로 섞은 5가지 버전을 생성합니다.
 
@@ -104,48 +110,27 @@ class SolverNode(BaseLLMNode):
 
     def _format_choices(self, choices: List[str]) -> str:
         """선지 리스트를 포맷팅된 문자열로 변환합니다."""
-        return "\n".join([f"{i + 1}. {choice}" for i, choice in enumerate(choices)])
+        return "\n".join(
+            [f"{i + 1}. {choice}" for i, choice in enumerate(choices)]
+        )
 
-    def _parse_answer(self, raw_output: str) -> int:
-        """
-        LLM 출력에서 JSON을 파싱하여 답안 번호를 추출합니다.
 
-        예상 형식: {"reasoning": "...", "answer": 3}
-        """
-        # 1. <think> 태그 제거
-        clean_output = re.sub(r'<think>.*?</think>', '', raw_output, flags=re.DOTALL).strip()
-        parsed_answer = None
-        parsed_reasoning = ""
+    def _parse_and_remap(
+        self, raw_output: str, original_indices: List[int]
+    ) -> Dict[str, Any]:
+        """결과 파싱 및 인덱스 복원 전담"""
+        try:
+            data = extract_json_from_text(raw_output)
+            shuffled_idx = int(data.get("answer", 0))
 
-        # 2. JSON 파싱 시도 (가장 바깥쪽 중괄호 탐색)
-        start_idx = clean_output.find('{')
-        end_idx = clean_output.rfind('}')
-        
-        if start_idx != -1 and end_idx != -1:
-            json_str = clean_output[start_idx : end_idx + 1]
-            result = json.loads(json_str)
-            
-            val = result.get("answer")
-            if val is not None:
-                parsed_answer = int(val)
-            parsed_reasoning = result.get("reasoning", "")
-            
-        if parsed_answer is None:
-            print(f"parsing error:\n{raw_output[:500]}")
-            parsed_answer = -1 
-        return parsed_reasoning, parsed_answer
+            if 1 <= shuffled_idx <= len(original_indices):
+                original_answer = original_indices[shuffled_idx - 1]
+            else:
+                original_answer = 0
 
-    def _remap_index(self, shuffled_answer: int, original_indices: List[int]) -> int:
-        """
-        섞인 선지에서 선택한 답을 원본 문제의 번호로 변환합니다.
-
-        Args:
-            shuffled_answer: 섞인 선지에서 선택한 번호 (1-indexed)
-            original_indices: 섞인 순서의 원본 인덱스 리스트
-                예: [3, 1, 4, 2, 5] → 셔플된 1번 = 원본 3번
-
-        Returns:
-            원본 문제에서의 정답 번호
-        """
-        shuffled_answer = int(shuffled_answer)
-        return original_indices[shuffled_answer - 1]
+            return {
+                "reasoning": data.get("think", data.get("reasoning", "")).strip(),
+                "answer": original_answer,
+            }
+        except Exception:
+            return {"reasoning": "Parsing failed", "answer": 0}
