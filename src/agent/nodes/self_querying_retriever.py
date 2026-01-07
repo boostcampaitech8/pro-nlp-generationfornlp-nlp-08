@@ -32,7 +32,7 @@ class RetrievalNode(BaseLLMNode):
         raw_output = self.generate(
             user_prompt = self.user_prompt,
             system_prompt=self.system_prompt,
-            enable_thinking=False,
+            enable_thinking=self.enable_thinking,
             paragraph=state["problem"].paragraph,
             question=state["problem"].question,
             choices=choices_str,
@@ -44,5 +44,5 @@ class RetrievalNode(BaseLLMNode):
         for keyword in keywords:
             keyword = keyword[:100]
             search_results.extend([RetrievalResult(**result) for result in duckduckgo_search(keyword)])
-
+        
         return {"retrieval_results": search_results}

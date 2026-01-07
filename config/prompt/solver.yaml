@@ -7,6 +7,7 @@ track_a:
 
     ### 응답 제약 조건 (필독)
     1. **형식**: 반드시 순수한 JSON 형식으로만 응답하세요. Markdown 코드 블록(```json 등)을 절대 사용하지 마세요.
+    2. 답은 선지 중 단 하나만 골라야 합니다. 여러 개를 선택하지 마세요.
 
     ###입력 형식
     [지문]: {paragraph}
@@ -44,4 +45,4 @@ track_b:
     [선지]: {choices}
 
 strategy:
-  enable_thinking: true
+  enable_thinking: false
