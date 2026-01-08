@@ -1,0 +1,30 @@
+name: "Refactor Proposal"
+title: "[REFACTOR] "
+description: "코드 구조 개선 및 리팩토링 제안을 위한 템플릿입니다."
+labels: ["refactor"]
+body:
+  - type: textarea
+    attributes:
+      label: 📄 Description
+      description: 리팩토링이 필요한 부분에 대해 설명해주세요.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 🎯 Goal & Benefits
+      description: 이 리팩토링을 통해 얻을 수 있는 이점을 구체적으로 적어주세요.
+      placeholder: |
+        - 함수 길이 단축을 통한 가독성 향상
+        - 중복 코드 제거
+        - 실행 속도 개선
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 📂 Target Scope
+      description: 리팩토링이 적용될 파일 경로, 디렉토리, 또는 모듈을 명시해 주세요.
+      placeholder: |
+        - src/models/
+        - app.py
+    validations:
+      required: false

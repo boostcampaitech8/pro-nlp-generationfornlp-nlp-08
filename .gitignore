@@ -1,0 +1,12 @@
+data/**/*
+!data/**/
+!data/**/.keep
+outputs/**/*
+!outputs/**/
+!outputs/**/.keep
+.venv/
+__pycache__/
+*.pyc
+src/base/baseline_code.ipynb
+.env
+.langgraph_api
