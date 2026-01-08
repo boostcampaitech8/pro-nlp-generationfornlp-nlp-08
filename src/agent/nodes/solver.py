@@ -39,11 +39,16 @@ class SolverNode(BaseLLMNode):
 
         track_info = state.get("track_info", {})
         is_rag_required = track_info.get("is_rag_required", False)
-        track = "track_b" if is_rag_required else "track_a"
 
         context_str = ""
-        for i, document in enumerate(state["retrieval_results"]):
-            context_str += f"[context_{i+1}: {document['title']}]\n{document['body']}\n\n"
+        track = ""
+        if is_rag_required:
+            for i, document in enumerate(state["retrieval_results"]):
+                context_str += f"[context_{i+1}: {document['title']}]\n{document['body']}\n\n"
+            track = "track_b"
+        else:
+            track = "track_a"
+
         tta_versions = self._generate_tta_versions(state["problem"].choices)
         solver_results = []
 

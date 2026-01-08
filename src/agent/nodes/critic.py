@@ -18,19 +18,26 @@ class CriticNode(BaseLLMNode):
 
     @traceable(name="CriticNode")
     def __call__(self, state: AgentState) -> Dict[str, List[CriticResult]]:
-        # State에서 필요한 모든 정보 추출
-        problem = state.get("problem", {})
+        
+        track_info = state.get("track_info", {})
+        is_rag_required = track_info.get("is_rag_required", False)
+
+        context_str = ""
+        track = ""
+        if is_rag_required:
+            for i, document in enumerate(state["retrieval_results"]):
+                context_str += f"[context_{i+1}: {document['title']}]\n{document['body']}\n\n"
+            track = "track_b"
+        else:
+            track = "track_a"
+
         solver_results = state["solver_results"]
-        track = "track_b" if not state.get("track_info", {}).get("is_rag_required", False) else "track_a"
 
         critic_results = []
 
         # 각 결과에 대한 평가 진행
         for i, solver_result in enumerate(solver_results):
 
-            choices_str = ", ".join(
-                [f"{i+1}. {c}" for i, c in enumerate(state["problem"].choices)]
-            )
             payload = {
                 "user_prompt": self.cfg.prompt.critic[track].user,
                 "system_prompt": self.cfg.prompt.critic[track].system,
@@ -41,9 +48,7 @@ class CriticNode(BaseLLMNode):
                 "reasoning": solver_result["reasoning"],
             }
             if track == "track_b":
-                payload["context"] = ""
-                for j, document in enumerate(state["retrieval_results"]):
-                    payload["context"] += f"[context_{j+1}: {document['title']}]\n{document['body']}\n\n"
+                payload["context"] = context_str
 
             # 템플릿에 따른 모델 추론 진행
             raw_output = self.generate(
