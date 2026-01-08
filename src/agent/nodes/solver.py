@@ -39,10 +39,15 @@ class SolverNode(BaseLLMNode):
 
         track_info = state.get("track_info", {})
         is_rag_required = track_info.get("is_rag_required", False)
-        track = "track_b" if is_rag_required else "track_a"
 
-        retrieved_context = state.get("retrieved_context", [])
-        context = "\n".join(retrieved_context) if retrieved_context else ""
+        context_str = ""
+        track = ""
+        if is_rag_required:
+            for i, document in enumerate(state["retrieval_results"]):
+                context_str += f"[context_{i+1}: {document['title']}]\n{document['body']}\n\n"
+            track = "track_b"
+        else:
+            track = "track_a"
 
         tta_versions = self._generate_tta_versions(state["problem"].choices)
         solver_results = []
@@ -57,7 +62,7 @@ class SolverNode(BaseLLMNode):
                 "choices": choices_str,
             }
             if track == "track_b":
-                input_kwargs["context"] = context
+                input_kwargs["context"] = context_str
 
             raw_output = self.generate(
                 user_prompt=self.user_prompt_template[track],
@@ -67,6 +72,8 @@ class SolverNode(BaseLLMNode):
             )
 
             parsed_result = self._parse_and_remap(raw_output, original_indices)
+
+            parsed_result["raw_choice"] = choices_str
 
             solver_results.append(parsed_result)
 
@@ -103,7 +110,6 @@ class SolverNode(BaseLLMNode):
 
             # 섞인 순서대로 선지 재배열
             shuffled_choices = [choices[i - 1] for i in shuffled_indices]
-
             versions.append((shuffled_choices, shuffled_indices))
 
         return versions
@@ -131,6 +137,7 @@ class SolverNode(BaseLLMNode):
             return {
                 "reasoning": data.get("think", data.get("reasoning", "")).strip(),
                 "answer": original_answer,
+                "raw_answer": shuffled_idx,
             }
         except Exception:
             return {"reasoning": "Parsing failed", "answer": 0}
