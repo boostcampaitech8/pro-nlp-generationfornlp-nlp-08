@@ -6,7 +6,7 @@ from .nodes import (
     retrieval,
     # prompt,
     solver,
-    # solver_no_tta as solver,
+    # solver_batch as solver,
     critic,
     ensemble,
 )
