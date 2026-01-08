@@ -46,3 +46,4 @@ track_b:
 
 strategy:
   enable_thinking: true
+  num_TTA: 3

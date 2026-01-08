@@ -13,12 +13,10 @@ class SolverNode(BaseLLMNode):
     """
     Module 3. Solver Engine with TTA
 
-    - 5번의 TTA를 사용하여 편향을 제거합니다.
-    - 선지의 순서를 무작위로 섞은 5가지 버전을 생성하고, 각각에 대해 답안을 생성합니다.
+    - {num_TTA}번의 TTA를 사용하여 편향을 제거합니다.
+    - 선지의 순서를 무작위로 섞은 {num_TTA}가지 버전을 생성하고, 각각에 대해 답안을 생성합니다.
     - Index Remapping을 통해 섞인 선지에서 고른 답을 원본 번호로 변환합니다.
     """
-
-    NUM_TTA_VERSIONS = 3  # TTA 버전 수
 
     def __init__(self, config):
         super().__init__(config, model_name="main_solver")
@@ -32,6 +30,10 @@ class SolverNode(BaseLLMNode):
         }
         self.enable_thinking = config.prompt.solver.strategy.get(
             "enable_thinking", False
+        )
+        
+        self.num_TTA = config.prompt.solver.strategy.get(
+            "num_TTA", 5
         )
 
     @traceable(name="SolverNode")
@@ -97,7 +99,7 @@ class SolverNode(BaseLLMNode):
         versions = []
         used_permutations = set()
 
-        for _ in range(self.NUM_TTA_VERSIONS):
+        for _ in range(self.num_TTA):
             # 중복되지 않는 순열 생성
             while True:
                 shuffled_indices = original_indices.copy()
