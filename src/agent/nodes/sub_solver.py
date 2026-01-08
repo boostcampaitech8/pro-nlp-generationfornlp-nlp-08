@@ -19,7 +19,7 @@ class SolverNode(BaseLLMNode):
     """
 
     def __init__(self, config):
-        super().__init__(config, model_name="main_solver")
+        super().__init__(config, model_name="sub_solver")
         self.system_prompt = {
             "track_a": config.prompt.solver.track_a.system,
             "track_b": config.prompt.solver.track_b.system,
@@ -79,7 +79,8 @@ class SolverNode(BaseLLMNode):
 
             solver_results.append(parsed_result)
 
-        return {"solver_results": solver_results}
+        self.unload_model()
+        return {"sub_solver_results": solver_results}
 
     def _generate_tta_versions(
         self, choices: List[str]

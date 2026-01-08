@@ -215,3 +215,6 @@ class BaseLLMNode:
             torch.cuda.synchronize()
 
         return decoded_outputs
+
+    def unload_model(self):
+        self.model_factory.unload_model(self.model_name)

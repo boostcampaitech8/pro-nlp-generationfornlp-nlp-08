@@ -2,11 +2,9 @@ from langgraph.graph import StateGraph, END
 from .state import AgentState
 from .nodes import (
     router,
-    # self_querying_retriever as retriever,
     retrieval,
-    # prompt,
-    solver,
-    # solver_batch as solver,
+    main_solver, 
+    sub_solver,
     critic,
     ensemble,
 )
@@ -17,8 +15,8 @@ def build_graph(cfg):
 
     workflow.add_node("router", router.RouterNode(cfg))
     workflow.add_node("retriever", retrieval.RetrievalNode(cfg))
-    # workflow.add_node("prompt_builder", prompt.PromptNode(cfg))
-    workflow.add_node("solver", solver.SolverNode(cfg))
+    workflow.add_node("sub_solver", sub_solver.SolverNode(cfg))
+    workflow.add_node("main_solver", main_solver.SolverNode(cfg))
     workflow.add_node("critic", critic.CriticNode(cfg))
     workflow.add_node("ensemble", ensemble.EnsembleNode(cfg))
 
@@ -26,20 +24,20 @@ def build_graph(cfg):
 
     workflow.add_conditional_edges(
         "router",
-        lambda x: (
-            "retriever"
-            if x["track_info"]["is_rag_required"]
-            else "solver"
+        lambda state: (
+            "rag_required"
+            if state["track_info"]["is_rag_required"]
+            else "non_rag_required"
         ),
         {
-            "retriever": "retriever",
-            "solver": "solver",
+            "rag_required": "retriever",
+            "non_rag_required": "sub_solver",
         },
     )
 
-    workflow.add_edge("retriever", "solver")
-    # workflow.add_edge("solver", END)
-    workflow.add_edge("solver", "critic")
+    workflow.add_edge("retriever", "sub_solver")
+    workflow.add_edge("sub_solver", "main_solver")
+    workflow.add_edge("main_solver", "critic")
     workflow.add_edge("critic", "ensemble")
     workflow.add_edge("ensemble", END)
 

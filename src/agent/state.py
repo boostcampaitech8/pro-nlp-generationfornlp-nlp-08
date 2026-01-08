@@ -29,6 +29,7 @@ class AgentState(TypedDict):
     track_info: RouterResult
     retrieval_results: List[RetrievalResult]
     solver_prompt: PromptResult
-    solver_results: List[SolverResult]
+    main_solver_results: List[SolverResult]
+    sub_solver_results: List[SolverResult]
     critic_results: List[CriticResult]
     final_answer: EnsembleResult

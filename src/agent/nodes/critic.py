@@ -31,34 +31,37 @@ class CriticNode(BaseLLMNode):
         else:
             track = "track_a"
 
-        solver_results = state["solver_results"]
+        critic_results: List[CriticResult] = []
+        
+        def evaluate(solver_results: List[dict], source: str):
+            # 각 결과에 대한 평가 진행
+            for solver_result in solver_results:
 
-        critic_results = []
+                payload = {
+                    "user_prompt": self.cfg.prompt.critic[track].user,
+                    "system_prompt": self.cfg.prompt.critic[track].system,
+                    "paragraph": state["problem"].paragraph,
+                    "question": state["problem"].question,
+                    "choices": solver_result["raw_choice"],
+                    "predicted_answer": solver_result["raw_answer"],
+                    "reasoning": solver_result["reasoning"],
+                }
+                if track == "track_b":
+                    payload["context"] = context_str
 
-        # 각 결과에 대한 평가 진행
-        for i, solver_result in enumerate(solver_results):
+                # 템플릿에 따른 모델 추론 진행
+                raw_output = self.generate(**payload)
 
-            payload = {
-                "user_prompt": self.cfg.prompt.critic[track].user,
-                "system_prompt": self.cfg.prompt.critic[track].system,
-                "paragraph": state["problem"].paragraph,
-                "question": state["problem"].question,
-                "choices": solver_result["raw_choice"],
-                "predicted_answer": solver_result["raw_answer"],
-                "reasoning": solver_result["reasoning"],
-            }
-            if track == "track_b":
-                payload["context"] = context_str
+                # raw 결과 json으로 전처리
+                parsed = extract_json_from_text(raw_output)
+                parsed["source"] = source
 
-            # 템플릿에 따른 모델 추론 진행
-            raw_output = self.generate(
-                **payload
-            )
-
-            # raw 결과 json으로 전처리
-            critic_result = extract_json_from_text(raw_output)
-
-            # 결과 형식에 추가
-            critic_results.append(CriticResult(**critic_result))
-        # 5. 결과 반환 (List[Dict[str, str]])
+                # 결과 형식에 추가
+                critic_results.append(CriticResult(**parsed))
+            # 5. 결과 반환 (List[Dict[str, str]])
+        
+        evaluate(state["main_solver_results"], source="main_solver")
+        evaluate(state["sub_solver_results"], source="sub_solver")
+        
+        self.unload_model()
         return {"critic_results": critic_results}
