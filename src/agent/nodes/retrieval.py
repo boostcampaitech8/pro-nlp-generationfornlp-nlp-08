@@ -68,7 +68,7 @@ class RetrievalNode:
             limit=self.cfg.model.bge_m3.retriever.top_k,
         )
 
-        retrieval_results:  = []
+        retrieval_results: List[RetrievalResult] = []
         for hit in search_result.points:
             text = hit.payload.get("text", "")
             head, _, body = text.partition("\n\n")
