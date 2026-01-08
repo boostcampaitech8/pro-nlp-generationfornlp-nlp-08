@@ -68,16 +68,15 @@ class RetrievalNode:
             limit=self.cfg.model.bge_m3.retriever.top_k,
         )
 
-        retrieval_results: List[RetrievalResult] = []
+        retrieval_results:  = []
         for hit in search_result.points:
-            payload = hit.payload or {}
-            title = payload.get("title", "")
-            body = (
-                payload.get("body")
-                or payload.get("text")
-                or payload.get("content")
-                or ""
+            text = hit.payload.get("text", "")
+            head, _, body = text.partition("\n\n")
+            retrieval_results.append(
+                {
+                    "title": head.replace("문서 제목:", "").strip(),
+                    "body": body.strip(),
+                }
             )
-            retrieval_results.append(RetrievalResult(title=title, body=body))
 
         return {"retrieval_results": retrieval_results}
