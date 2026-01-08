@@ -5,8 +5,8 @@ from .nodes import (
     # self_querying_retriever as retriever,
     retrieval,
     # prompt,
-    # solver,
-    solver_batch as solver,
+    solver,
+    # solver_batch as solver,
     critic,
     ensemble,
 )

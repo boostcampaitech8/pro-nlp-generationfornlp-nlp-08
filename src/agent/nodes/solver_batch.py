@@ -17,7 +17,7 @@ class SolverNode(BaseLLMNode):
     - Index Remapping을 통해 섞인 선지에서 고른 답을 원본 번호로 변환합니다.
     """
 
-    NUM_TTA_VERSIONS = 2  # TTA 버전 수
+    NUM_TTA_VERSIONS = 3  # TTA 버전 수
 
     def __init__(self, config):
         super().__init__(config, model_name="main_solver")
