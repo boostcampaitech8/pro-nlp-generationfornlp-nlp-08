@@ -4,7 +4,7 @@ from src.model.factory import ModelFactory
 from transformers import TextStreamer
 from langsmith import traceable
 import gc
-
+from typing import List
 
 
 class BaseLLMNode:
@@ -78,11 +78,11 @@ class BaseLLMNode:
                 messages,
                 tokenize=False,
                 add_generation_prompt=True,
-                enable_thinking=enable_thinking
+                enable_thinking=enable_thinking,
             )
 
             # if enable_thinking:
-                # text += "<think>\n"
+            # text += "<think>\n"
 
             if self.verbose:
                 print("======LLM Input=========\n", text)
@@ -116,7 +116,102 @@ class BaseLLMNode:
                 del streamer
             # free_gpu_memory()
             gc.collect()
-            torch.cuda.empty_cache() 
+            torch.cuda.empty_cache()
             torch.cuda.synchronize()
 
         return decoded_output
+
+    @traceable(name="BaseLLMNode.generate_batch")
+    def generate_batch(
+        self,
+        user_prompt_templates: List[str],
+        system_prompts: List[str],
+        enable_thinking: bool = False,
+        kwargs: List[dict] = [],
+        batch_size: int = 2,
+    ) -> List[str]:
+        """
+        LLM에게 배치 프롬프트를 입력하고, 생성된 텍스트(답변)를 반환하는 함수
+
+        Args:
+            user_prompts (list): 사용자 메시지 리스트 (실제 질문이나 요청 내용)
+            system_prompts (list): 시스템 메시지 리스트 (모델에게 역할을 지시하는 용도)
+            enable_thinking (bool): 생각하는 프롬프트 기법 활성화 여부
+            **kwargs: user_prompt 내에 포맷팅할 변수들
+        Returns:
+            list: 모델이 생성한 순수 텍스트 답변 리스트 (특수 토큰 제외)
+        """
+        model, tokenizer = self.model_factory.get_model(self.model_name)
+        tokenizer.padding_side = "left"
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+
+        formatted_user_prompts = []
+        for user_prompt_template, kw in zip(user_prompt_templates, kwargs):
+            if kw:
+                try:
+                    formatted_content = user_prompt_template.format(**kw)
+                except KeyError as e:
+                    raise KeyError(
+                        f"❌ [Formatting Error] user_prompt 포맷팅 중 누락된 키: {e}"
+                    )
+            else:
+                formatted_content = user_prompt_template
+            formatted_user_prompts.append(formatted_content)
+        
+
+        decoded_outputs = []
+
+        try:
+            for i in range(0, len(formatted_user_prompts), batch_size):
+                batch_user_prompts = formatted_user_prompts[i : i + batch_size]
+                batch_system_prompts = system_prompts[i : i + batch_size]
+
+                texts = [] 
+                for user_prompt, system_prompt in zip(
+                    batch_user_prompts, batch_system_prompts
+                ):
+
+                    messages = []
+                    if system_prompt:
+                        messages.append(
+                            {"role": "system", "content": system_prompt}
+                        )
+                    messages.append({"role": "user", "content": user_prompt})
+                    text = tokenizer.apply_chat_template(
+                        messages,
+                        tokenize=False,
+                        add_generation_prompt=True,
+                        enable_thinking=enable_thinking,
+                    )
+                    texts.append(text)
+
+                inputs = tokenizer(texts, return_tensors="pt", padding=True).to(
+                    model.device
+                )
+                with torch.no_grad():
+                    outputs = model.generate(
+                        **inputs,
+                        **self.gen_params,
+                    )
+                input_len = inputs["input_ids"].shape[1]
+                for output in outputs:
+                    generated_tokens = output[input_len:]
+                    decoded_output = tokenizer.decode(
+                        generated_tokens, skip_special_tokens=True
+                    )
+                    decoded_outputs.append(decoded_output)
+
+        except Exception as e:
+            print(f"❌ [LLM Generation Error] {e}")
+            raise e
+        finally:
+            if model is not None:
+                del model
+            if tokenizer is not None:
+                del tokenizer
+            gc.collect()
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+
+        return decoded_outputs
