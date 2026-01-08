@@ -22,7 +22,6 @@ class CriticNode(BaseLLMNode):
         # State에서 필요한 모든 정보 추출
         problem = state.get("problem", {})
         solver_results = state["solver_results"]
-
         critic_results = []
 
         # 각 결과에 대한 평가 진행
