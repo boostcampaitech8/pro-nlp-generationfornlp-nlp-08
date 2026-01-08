@@ -1,0 +1,42 @@
+name: "Bug Report"
+title: "[BUG] "
+description: "버그 리포트를 위한 템플릿입니다."
+labels: ["bug"]
+body:
+  - type: textarea
+    attributes:
+      label: 📄 Description
+      description: 발생한 문제에 대해 구체적으로 설명해 주세요.
+      placeholder: |
+        어떤 문제가 발생했나요?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 👣 Steps to Reproduce
+      description: 개발자가 문제를 재현할 수 있도록 단계별로 작성해 주세요.
+      placeholder: |
+        1. '...' 페이지로 이동
+        2. '...' 버튼 클릭
+        3. 오류 발생
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: ✅ Expected Behavior
+      description: 정상적으로 작동했다면 어떻게 되어야 하는지 설명해주세요.
+    validations:
+      required: false
+  - type: input
+    attributes:
+      label: 💻 Environment
+      description: OS, 브라우저 버전, 라이브러리 버전 등을 적어주세요.
+      placeholder: Chrome 100.0, macOS 12.3, Python 3.9 등
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: 📸 Screenshots / Logs
+      description: 오류 스크린샷이나 에러 로그가 있다면 첨부해 주세요.
+    validations:
+      required: false
