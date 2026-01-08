@@ -1,5 +1,5 @@
 from omegaconf import DictConfig
-from src.model.loader import HuggingFaceLoader
+from src.model.loader import vLLMLoader
 
 class ModelFactory:
     def __init__(self, config: DictConfig):
@@ -22,5 +22,5 @@ class ModelFactory:
         
         # 로더 생성 및 로딩 수행
         # 추후 unsloth 등을 쓴다면 여기서 target_config 내용을 보고 분기 처리 가능
-        loader = HuggingFaceLoader(target_config)
+        loader = vLLMLoader(target_config)
         return loader.load()

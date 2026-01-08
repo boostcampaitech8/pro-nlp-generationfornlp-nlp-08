@@ -1,10 +1,9 @@
 import torch
 from omegaconf import DictConfig
 from src.model.factory import ModelFactory
-from transformers import TextStreamer
 from langsmith import traceable
 import gc
-
+from vllm import SamplingParams
 
 
 class BaseLLMNode:
@@ -54,7 +53,11 @@ class BaseLLMNode:
         """
         model = None
         tokenizer = None
-        streamer = None
+        sampling_params = SamplingParams(
+           max_tokens=self.gen_params.get("max_new_tokens", 1024),
+           temperature=self.gen_params.get("temperature", 1.0),
+           top_p=self.gen_params.get("top_p", 1.0),
+        )
 
         try:
             if kwargs:
@@ -81,29 +84,32 @@ class BaseLLMNode:
                 enable_thinking=enable_thinking
             )
 
-            # if enable_thinking:
-                # text += "<think>\n"
+            # # if enable_thinking:
+            #     # text += "<think>\n"
 
-            if self.verbose:
-                print("======LLM Input=========\n", text)
-                print("======LLM Output=========")
-                streamer = TextStreamer(tokenizer, skip_prompt=True)
-            else:
-                streamer = None
+            # if self.verbose:
+            #     print("======LLM Input=========\n", text)
+            #     print("======LLM Output=========")
+            #     streamer = TextStreamer(tokenizer, skip_prompt=True)
+            # else:
+            #     streamer = None
 
-            inputs = tokenizer(text, return_tensors="pt").to(model.device)
-            with torch.no_grad():
-                outputs = model.generate(
-                    **inputs,
-                    **self.gen_params,
-                    streamer=streamer,
-                )
-            input_len = inputs["input_ids"].shape[1]
-            generated_tokens = outputs[0][input_len:]
+            # inputs = tokenizer(text, return_tensors="pt").to(model.device)
+            # with torch.no_grad():
+            #     outputs = model.generate(
+            #         **inputs,
+            #         **self.gen_params,
+            #         streamer=streamer,
+            #     )
+            # input_len = inputs["input_ids"].shape[1]
+            # generated_tokens = outputs[0][input_len:]
 
-            decoded_output = tokenizer.decode(
-                generated_tokens, skip_special_tokens=True
-            )
+            # decoded_output = tokenizer.decode(
+            #     generated_tokens, skip_special_tokens=True
+            # )
+            
+            output = model.generate([text], sampling_params)
+            generated_text = output.outputs[0].text
         except Exception as e:
             print(f"❌ [LLM Generation Error] {e}")
             raise e
@@ -112,11 +118,9 @@ class BaseLLMNode:
                 del model
             if tokenizer is not None:
                 del tokenizer
-            if streamer is not None:
-                del streamer
             # free_gpu_memory()
             gc.collect()
             torch.cuda.empty_cache() 
             torch.cuda.synchronize()
 
-        return decoded_output
+        return generated_text
