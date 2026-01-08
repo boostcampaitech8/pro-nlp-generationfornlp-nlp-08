@@ -13,6 +13,8 @@ class PromptResult(TypedDict):
     user_prompt: str
 
 class SolverResult(TypedDict):
+    raw_answer: int
+    raw_choice: str
     answer: int
     reasoning: str
 
