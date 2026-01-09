@@ -40,7 +40,7 @@ $$Macro F1 = \frac{1}{N}\sum_{i=1}^{N}F1_{i}$$
 > 본 시스템은 수능형 문제를 해결하기 위해 설계된  Langgraph 기반 Multi-Agent AI 시스템입니다. 
 <br>
 
-<img src="assets/pipeline.png" width="480" alt="Pipeline">
+<img src="assets/pipeline.png" alt="Pipeline">
 
 1️⃣ Router 모듈 (Module 1: 분석 및 분기)
 입력된 데이터의 특징을 분석하여 파이프라인의 처리 경로를 동적으로 결정합니다.
@@ -136,11 +136,11 @@ CSAT-Solver/
 
 - **Public 리더보드**: 10위
 
-    <img src="assets/public_leaderboard.png" width="480" alt="public">
+    <img src="assets/public_leaderboard.png" alt="public">
 
 - **Private 리더보드**: 11위
 
-    <img src="assets/private_leaderboard.png" width="480" alt="private">
+    <img src="assets/private_leaderboard.png" alt="private">
 
 
 ### 주요 인사이트
