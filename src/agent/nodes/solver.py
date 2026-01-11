@@ -11,11 +11,13 @@ from langsmith import traceable
 
 class SolverNode(BaseLLMNode):
     """
-    Module 3. Solver Engine with TTA
+    TTA를 사용하여 편향을 제거하고 답안을 생성하는 Solver 노드
 
-    - 5번의 TTA를 사용하여 편향을 제거합니다.
-    - 선지의 순서를 무작위로 섞은 5가지 버전을 생성하고, 각각에 대해 답안을 생성합니다.
-    - Index Remapping을 통해 섞인 선지에서 고른 답을 원본 번호로 변환합니다.
+    Args:
+        config: 설정 객체
+
+    Returns:
+        Dict[str, List[SolverResult]]: 생성된 답안 리스트를 담은 딕셔너리
     """
 
     NUM_TTA_VERSIONS = 3  # TTA 버전 수
@@ -68,7 +70,7 @@ class SolverNode(BaseLLMNode):
                 user_prompt=self.user_prompt_template[track],
                 system_prompt=self.system_prompt[track],
                 enable_thinking=self.enable_thinking,
-                **input_kwargs, #type: ignore
+                **input_kwargs,  # type: ignore
             )
 
             parsed_result = self._parse_and_remap(raw_output, original_indices)
@@ -83,7 +85,7 @@ class SolverNode(BaseLLMNode):
         self, choices: List[str]
     ) -> List[Tuple[List[str], List[int]]]:
         """
-        선지의 순서를 무작위로 섞은 5가지 버전을 생성합니다.
+        선지의 순서를 무작위로 섞은 버전들을 생성합니다.
 
         Returns:
             List[Tuple[shuffled_choices, original_indices]]
@@ -115,16 +117,15 @@ class SolverNode(BaseLLMNode):
         return versions
 
     def _format_choices(self, choices: List[str]) -> str:
-        """선지 리스트를 포맷팅된 문자열로 변환합니다."""
+        """선지 리스트를 포맷팅된 문자열로 변환"""
         return "\n".join(
             [f"{i + 1}. {choice}" for i, choice in enumerate(choices)]
         )
 
-
     def _parse_and_remap(
         self, raw_output: str, original_indices: List[int]
     ) -> Dict[str, Any]:
-        """결과 파싱 및 인덱스 복원 전담"""
+        """결과 파싱 및 인덱스 복원"""
         try:
             data = extract_json_from_text(raw_output)
             shuffled_idx = int(data.get("answer", 0))
@@ -135,7 +136,9 @@ class SolverNode(BaseLLMNode):
                 original_answer = 0
 
             return {
-                "reasoning": data.get("think", data.get("reasoning", "")).strip(),
+                "reasoning": data.get(
+                    "think", data.get("reasoning", "")
+                ).strip(),
                 "answer": original_answer,
                 "raw_answer": shuffled_idx,
             }

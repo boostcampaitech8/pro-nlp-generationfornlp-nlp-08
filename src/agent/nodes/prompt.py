@@ -2,6 +2,7 @@ from typing import Dict
 from src.agent.state import AgentState, PromptResult
 from langsmith import traceable
 
+
 class PromptNode:
     """
     문제 해결을 위한 최종 프롬프트 메시지를 생성하는 노드
@@ -9,6 +10,8 @@ class PromptNode:
 
     Args:
         cfg: 설정 객체
+    Returns:
+        Dict[str, PromptResult]: 생성된 프롬프트를 담은 딕셔너리
     """
 
     def __init__(self, cfg):
@@ -28,10 +31,13 @@ class PromptNode:
 
             user_prompt = user_prompt_template.format(
                 context=context_str,
-                paragraph = state["problem"].paragraph,
+                paragraph=state["problem"].paragraph,
                 question=state["problem"].question,
                 choices=", ".join(
-                    [f"{i+1}. {c}" for i, c in enumerate(state["problem"].choices)]
+                    [
+                        f"{i+1}. {c}"
+                        for i, c in enumerate(state["problem"].choices)
+                    ]
                 ),
             )
         else:
@@ -41,7 +47,14 @@ class PromptNode:
                 paragraph=state["problem"].paragraph,
                 question=state["problem"].question,
                 choices=", ".join(
-                    [f"{i+1}. {c}" for i, c in enumerate(state["problem"].choices)]
+                    [
+                        f"{i+1}. {c}"
+                        for i, c in enumerate(state["problem"].choices)
+                    ]
                 ),
             )
-        return {"solver_prompt": PromptResult(system_prompt=system_prompt, user_prompt=user_prompt)}
+        return {
+            "solver_prompt": PromptResult(
+                system_prompt=system_prompt, user_prompt=user_prompt
+            )
+        }

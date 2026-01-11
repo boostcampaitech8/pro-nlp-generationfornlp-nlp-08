@@ -8,6 +8,12 @@ from langsmith import traceable
 class SolverNode(BaseLLMNode):
     """
     TTA를 사용하지 않는 기본 Solver 노드
+
+    Args:
+        config: 설정 객체
+
+    Returns:
+        Dict[str, EnsembleResult]: 정답을 담은 딕셔너리
     """
 
     def __init__(self, config):

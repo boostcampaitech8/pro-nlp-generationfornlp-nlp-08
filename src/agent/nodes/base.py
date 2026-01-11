@@ -9,7 +9,6 @@ from typing import List
 
 class BaseLLMNode:
     """
-    [역할]
     모든 Agent Node(Solver, Router, Critic 등)가 공통으로 상속받는 부모 클래스입니다.
 
     복잡한 모델 로딩, 토크나이징, GPU 이동, 디코딩 과정을 이 클래스 내부로 숨기고(캡슐화),
@@ -20,12 +19,14 @@ class BaseLLMNode:
         model_name (str): 사용할 모델의 설정 키 이름 (기본값: "main_solver")
                             - config.yaml의 model 섹션에 정의된 이름이어야 합니다.
                             - 예: "main_solver" (Qwen), "sub_solver" (Gemma)
+    Returns:
+        str: 모델이 생성한 순수 텍스트 답변
     """
 
     def __init__(self, cfg: DictConfig, model_name: str = "main_solver"):
         if model_name not in cfg.model:
             raise ValueError(
-                f"❌ [No such model] '{model_name}'에 해당하는 모델 설정이 cfg.model에 없습니다."
+                f"[No such model] '{model_name}'에 해당하는 모델 설정이 cfg.model에 없습니다."
             )
         self.cfg = cfg
         self.verbose = cfg.debug.get("verbose", False)
@@ -62,7 +63,7 @@ class BaseLLMNode:
                     formatted_content = user_prompt.format(**kwargs)
                 except KeyError as e:
                     raise KeyError(
-                        f"❌ [Formatting Error] user_prompt 포맷팅 중 누락된 키: {e}"
+                        f"[Formatting Error] user_prompt 포맷팅 중 누락된 키: {e}"
                     )
             else:
                 formatted_content = user_prompt
@@ -105,7 +106,7 @@ class BaseLLMNode:
                 generated_tokens, skip_special_tokens=True
             )
         except Exception as e:
-            print(f"❌ [LLM Generation Error] {e}")
+            print(f"[LLM Generation Error] {e}")
             raise e
         finally:
             if model is not None:
@@ -114,7 +115,7 @@ class BaseLLMNode:
                 del tokenizer
             if streamer is not None:
                 del streamer
-            # free_gpu_memory()
+
             gc.collect()
             torch.cuda.empty_cache()
             torch.cuda.synchronize()
@@ -137,9 +138,11 @@ class BaseLLMNode:
             user_prompts (list): 사용자 메시지 리스트 (실제 질문이나 요청 내용)
             system_prompts (list): 시스템 메시지 리스트 (모델에게 역할을 지시하는 용도)
             enable_thinking (bool): 생각하는 프롬프트 기법 활성화 여부
-            **kwargs: user_prompt 내에 포맷팅할 변수들
+            enable_thinking: 생각하는 프롬프트 기법 활성화 여부
+            kwargs: user_prompt 내에 포맷팅할 변수 리스트
+            batch_size: 배치 크기
         Returns:
-            list: 모델이 생성한 순수 텍스트 답변 리스트 (특수 토큰 제외)
+            List[str]: 모델이 생성한 순수 텍스트 답변 리스트
         """
         model, tokenizer = self.model_factory.get_model(self.model_name)
         tokenizer.padding_side = "left"
@@ -153,12 +156,11 @@ class BaseLLMNode:
                     formatted_content = user_prompt_template.format(**kw)
                 except KeyError as e:
                     raise KeyError(
-                        f"❌ [Formatting Error] user_prompt 포맷팅 중 누락된 키: {e}"
+                        f"[Formatting Error] user_prompt 포맷팅 중 누락된 키: {e}"
                     )
             else:
                 formatted_content = user_prompt_template
             formatted_user_prompts.append(formatted_content)
-        
 
         decoded_outputs = []
 
@@ -167,7 +169,7 @@ class BaseLLMNode:
                 batch_user_prompts = formatted_user_prompts[i : i + batch_size]
                 batch_system_prompts = system_prompts[i : i + batch_size]
 
-                texts = [] 
+                texts = []
                 for user_prompt, system_prompt in zip(
                     batch_user_prompts, batch_system_prompts
                 ):
@@ -186,9 +188,9 @@ class BaseLLMNode:
                     )
                     texts.append(text)
 
-                inputs = tokenizer(texts, return_tensors="pt", padding=True).to(
-                    model.device
-                )
+                inputs = tokenizer(
+                    texts, return_tensors="pt", padding=True
+                ).to(model.device)
                 with torch.no_grad():
                     outputs = model.generate(
                         **inputs,
@@ -203,7 +205,7 @@ class BaseLLMNode:
                     decoded_outputs.append(decoded_output)
 
         except Exception as e:
-            print(f"❌ [LLM Generation Error] {e}")
+            print(f"[LLM Generation Error] {e}")
             raise e
         finally:
             if model is not None:

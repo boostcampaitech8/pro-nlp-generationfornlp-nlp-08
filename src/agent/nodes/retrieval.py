@@ -10,6 +10,15 @@ from langsmith import traceable
 
 
 class RetrievalNode:
+    """
+    문제 해결에 필요한 문서를 벡터 DB에서 검색하는 Retrieval 노드
+
+    Args:
+        cfg: 설정 객체
+
+    Returns:
+        Dict[str, List[RetrievalResult]]: 검색된 문서들을 담은 딕셔너리
+    """
 
     def __init__(self, cfg: DictConfig):
         self.cfg = cfg
