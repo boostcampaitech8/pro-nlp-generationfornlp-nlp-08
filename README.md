@@ -97,7 +97,12 @@ Solver가 도출한 결과의 품질을 관리하는 단계입니다.
     uv sync
     ```
 
-2. 프로그램 실행
+2. uv 가상환경 실행
+    ```bash
+    source .venv/bin/activate
+    ```
+
+3. 프로그램 실행
     ```bash
     uv run main.py
     ```
