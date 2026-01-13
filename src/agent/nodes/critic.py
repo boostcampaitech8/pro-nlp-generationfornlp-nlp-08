@@ -13,7 +13,7 @@ class CriticNode(BaseLLMNode):
     Solver 노드에서 생성한 답안을 평가하는 Critic 노드
 
     Args:
-        config: 설정 객체
+        cfg: 설정 객체
 
     Returns:
         Dict[str, List[CriticResult]]: 평가 결과 리스트를 담은 딕셔너리

@@ -12,16 +12,19 @@ class RetrievalNode(BaseLLMNode):
     cfg.prompt.retrieval.template을 사용하여 LLM에 검색 키워드 추출 요청
 
     Args:
-        config: 설정 객체
+        cfg: 설정 객체
 
     Returns:
         Dict[str, List[RetrievalResult]]: 검색된 문서들을 담은 딕셔너리
     """
+
     def __init__(self, config):
         super().__init__(config, model_name="main_solver")
         self.system_prompt = config.prompt.retrieval.system
         self.user_prompt = config.prompt.retrieval.user
-        self.enable_thinking = config.prompt.retrieval.strategy.get("enable_thinking", False)
+        self.enable_thinking = config.prompt.retrieval.strategy.get(
+            "enable_thinking", False
+        )
 
     @traceable(name="RetrievalNode")
     def __call__(self, state: AgentState) -> Dict[str, List[RetrievalResult]]:
@@ -30,7 +33,7 @@ class RetrievalNode(BaseLLMNode):
         )
 
         raw_output = self.generate(
-            user_prompt = self.user_prompt,
+            user_prompt=self.user_prompt,
             system_prompt=self.system_prompt,
             enable_thinking=self.enable_thinking,
             paragraph=state["problem"].paragraph,
@@ -43,6 +46,11 @@ class RetrievalNode(BaseLLMNode):
         search_results = []
         for keyword in keywords:
             keyword = keyword[:100]
-            search_results.extend([RetrievalResult(**result) for result in duckduckgo_search(keyword)])
-        
+            search_results.extend(
+                [
+                    RetrievalResult(**result)
+                    for result in duckduckgo_search(keyword)
+                ]
+            )
+
         return {"retrieval_results": search_results}

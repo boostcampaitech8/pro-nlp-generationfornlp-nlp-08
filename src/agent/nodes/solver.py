@@ -14,13 +14,13 @@ class SolverNode(BaseLLMNode):
     TTA를 사용하여 편향을 제거하고 답안을 생성하는 Solver 노드
 
     Args:
-        config: 설정 객체
+        cfg: 설정 객체
 
     Returns:
         Dict[str, List[SolverResult]]: 생성된 답안 리스트를 담은 딕셔너리
     """
 
-    NUM_TTA_VERSIONS = 3  # TTA 버전 수
+    NUM_TTA_VERSIONS = 3
 
     def __init__(self, config):
         super().__init__(config, model_name="main_solver")

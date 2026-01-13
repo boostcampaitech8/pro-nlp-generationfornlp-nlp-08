@@ -29,8 +29,12 @@ class EnsembleNode:
 
         if pass_answers:
             voting_targets = pass_answers
+            # strategy = "Pass Filtering"
+
         else:
+            # 모든 critic이 Fail이면 전체 답변으로 hard voting
             voting_targets = [res.get("answer") for res in solver_results]
+            # strategy = "Fallback (All Fail)"
 
         if not voting_targets:
             return {"final_answer": None}
@@ -38,4 +42,7 @@ class EnsembleNode:
         vote_counts = Counter(voting_targets)
         final_choice, count = vote_counts.most_common(1)[0]
 
+        # print(f"전략: {strategy} | 결과: {final_choice} (득표: {count}/{len(voting_targets)})")
+
+        # 결과 반환
         return {"final_answer": int(final_choice)}

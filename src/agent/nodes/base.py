@@ -138,8 +138,7 @@ class BaseLLMNode:
             user_prompts (list): 사용자 메시지 리스트 (실제 질문이나 요청 내용)
             system_prompts (list): 시스템 메시지 리스트 (모델에게 역할을 지시하는 용도)
             enable_thinking (bool): 생각하는 프롬프트 기법 활성화 여부
-            enable_thinking: 생각하는 프롬프트 기법 활성화 여부
-            kwargs: user_prompt 내에 포맷팅할 변수 리스트
+            **kwargs: user_prompt 내에 포맷팅할 변수 리스트
             batch_size: 배치 크기
         Returns:
             List[str]: 모델이 생성한 순수 텍스트 답변 리스트
