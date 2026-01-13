@@ -1,5 +1,5 @@
 # 💯 수능형 문제 풀이 모델 생성
-> Naver BoostCamp AI Tech 8기 NLP 트랙 2nd 프로젝트
+> Naver BoostCamp AI Tech 8기 NLP 트랙 프로젝트
 
 
 ## ✅ 프로젝트 소개
@@ -18,12 +18,12 @@
 
 ### ◼ 평가 지표
 불균형한 데이터 분포를 고려하여 Macro F1-score를 메인 지표로 사용합니다.
+
 $$Macro F1 = \frac{1}{N}\sum_{i=1}^{N}F1_{i}$$
 
 ### ◼ 프로젝트 요약
 |항목|내용|
 |--|--|
-|<b>구조||
 |<b>평가 지표|MARCO F1-score|
 |<b>개발 환경|V100 32G server|
 |<b>협업 환경|GitHub, Slack, Zoom |
@@ -37,12 +37,13 @@ $$Macro F1 = \frac{1}{N}\sum_{i=1}^{N}F1_{i}$$
 |<b>박도현|VectorDB 구축, RAG Retrieval 모듈 구현, Critic 및 Ensemble 모듈 초기 설계|[@ManRaccoon](https://github.com/ManRaccoon)|
 |<b>오수빈|데이터 레이블링, Solver 평가기 제작, TTA/Few-shot/파라미터 튜닝 실험|[@OhSuBin13](https://github.com/OhSuBin13)|
 ## ⚙ 시스템 구조
-> 본 시스템은 수능형 문제를 해결하기 위해 설계된  Langgraph 기반 Multi-Agent AI 시스템입니다. 
+> 본 시스템은 수능형 문제를 해결하기 위해 설계된  LangGraph 기반 Multi-Agent AI 시스템입니다. 
 <br>
 
 <img src="assets/pipeline.png" alt="Pipeline">
 
 1️⃣ Router 모듈 (Module 1: 분석 및 분기)
+
 입력된 데이터의 특징을 분석하여 파이프라인의 처리 경로를 동적으로 결정합니다.
 
 - 선지 개수 기반 라우팅: EDA 결과를 통해 발견된 선지 개수와 문제 유형 간의 상관관계를 활용합니다.
