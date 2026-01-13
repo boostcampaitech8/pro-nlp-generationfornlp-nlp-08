@@ -89,6 +89,34 @@ Solver가 도출한 결과의 품질을 관리하는 단계입니다.
 
 - 성과: 클래스 불균형이 높은 데이터셋에서 소수 클래스에 대한 예측력을 개선하여 F1-score를 약 1.33% 상승시켰습니다.
 
+## 🚀 실행 방법
+
+1. uv sync를 통해 의존성 동기화
+
+    ```bash
+    uv sync
+    ```
+
+2. 프로그램 실행
+    ```bash
+    uv run main.py
+    ```
+
+- Qdrant 서버 설치 및 사용법
+    ```bash
+    wget https://github.com/qdrant/qdrant/releases/latest/download/qdrant-x86_64-unknown-linux-musl.tar.gz && \
+    tar -xvf qdrant-x86_64-unknown-linux-musl.tar.gz && \
+    rm qdrant-x86_64-unknown-linux-musl.tar.gz && \
+    chmod +x qdrant && \
+    ./qdrant
+    ```
+    
+- vectorDB
+    - collection_name = COLLECTION_NAME
+    - 원시 text chunking 시 "문서 제목:제목>\n\n<본문>" 형식으로 전처리하였습니다.
+
+
+
 ## 📁 프로젝트 구조
 
 ```bash
