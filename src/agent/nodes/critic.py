@@ -9,6 +9,16 @@ from src.utils.text import extract_json_from_text
 
 
 class CriticNode(BaseLLMNode):
+    """
+    Solver 노드에서 생성한 답안을 평가하는 Critic 노드
+
+    Args:
+        cfg: 설정 객체
+
+    Returns:
+        Dict[str, List[CriticResult]]: 평가 결과 리스트를 담은 딕셔너리
+    """
+
     def __init__(self, config):
         super().__init__(config, model_name="main_solver")
         self.cfg = config
@@ -18,7 +28,7 @@ class CriticNode(BaseLLMNode):
 
     @traceable(name="CriticNode")
     def __call__(self, state: AgentState) -> Dict[str, List[CriticResult]]:
-        
+
         track_info = state.get("track_info", {})
         is_rag_required = track_info.get("is_rag_required", False)
 
@@ -50,15 +60,8 @@ class CriticNode(BaseLLMNode):
             if track == "track_b":
                 payload["context"] = context_str
 
-            # 템플릿에 따른 모델 추론 진행
-            raw_output = self.generate(
-                **payload
-            )
-
-            # raw 결과 json으로 전처리
+            raw_output = self.generate(**payload)
             critic_result = extract_json_from_text(raw_output)
-
-            # 결과 형식에 추가
             critic_results.append(CriticResult(**critic_result))
-        # 5. 결과 반환 (List[Dict[str, str]])
+
         return {"critic_results": critic_results}

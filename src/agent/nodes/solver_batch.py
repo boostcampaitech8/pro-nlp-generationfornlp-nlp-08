@@ -10,11 +10,13 @@ from langsmith import traceable
 
 class SolverNode(BaseLLMNode):
     """
-    Module 3. Solver Engine with TTA
+    TTA를 사용하여 편향을 제거하고 답안을 생성하는 Solver 노드
 
-    - 5번의 TTA를 사용하여 편향을 제거합니다.
-    - 선지의 순서를 무작위로 섞은 5가지 버전을 생성하고, 각각에 대해 답안을 생성합니다.
-    - Index Remapping을 통해 섞인 선지에서 고른 답을 원본 번호로 변환합니다.
+    Args:
+        cfg: 설정 객체
+
+    Returns:
+        Dict[str, List[SolverResult]]: 생성된 답안 리스트를 담은 딕셔너리
     """
 
     NUM_TTA_VERSIONS = 3  # TTA 버전 수
@@ -42,7 +44,9 @@ class SolverNode(BaseLLMNode):
 
         context_str = ""
         for i, document in enumerate(state["retrieval_results"]):
-            context_str += f"[context_{i+1}: {document['title']}]\n{document['body']}\n\n"
+            context_str += (
+                f"[context_{i+1}: {document['title']}]\n{document['body']}\n\n"
+            )
         tta_versions = self._generate_tta_versions(state["problem"].choices)
 
         inputs = {
@@ -54,7 +58,9 @@ class SolverNode(BaseLLMNode):
 
         for shuffled_choices, original_indices in tta_versions:
             choices_str = self._format_choices(shuffled_choices)
-            inputs["user_prompt_templates"].append(self.user_prompt_template[track])
+            inputs["user_prompt_templates"].append(
+                self.user_prompt_template[track]
+            )
             inputs["system_prompts"].append(self.system_prompt[track])
             kwargs = {
                 "paragraph": state["problem"].paragraph,
@@ -65,11 +71,15 @@ class SolverNode(BaseLLMNode):
                 kwargs["context"] = context_str
             inputs["kwargs"].append(kwargs)
             original_indices_list.append(original_indices)
-        
-        raw_outputs = self.generate_batch(**inputs, enable_thinking=self.enable_thinking)
+
+        raw_outputs = self.generate_batch(
+            **inputs, enable_thinking=self.enable_thinking
+        )
 
         solver_results = []
-        for raw_output, original_indices in zip(raw_outputs, original_indices_list):
+        for raw_output, original_indices in zip(
+            raw_outputs, original_indices_list
+        ):
             parsed_result = self._parse_and_remap(raw_output, original_indices)
             parsed_result["raw_choice"] = choices_str
             solver_results.append(parsed_result)
@@ -117,7 +127,6 @@ class SolverNode(BaseLLMNode):
             [f"{i + 1}. {choice}" for i, choice in enumerate(choices)]
         )
 
-
     def _parse_and_remap(
         self, raw_output: str, original_indices: List[int]
     ) -> Dict[str, Any]:
@@ -132,7 +141,9 @@ class SolverNode(BaseLLMNode):
                 original_answer = 0
 
             return {
-                "reasoning": data.get("think", data.get("reasoning", "")).strip(),
+                "reasoning": data.get(
+                    "think", data.get("reasoning", "")
+                ).strip(),
                 "answer": original_answer,
                 "raw_answer": shuffled_idx,
             }
